@@ -1,18 +1,8 @@
 #include "Farneback_of.h"
 #include<iostream>
-/*rua*/
-#include<vector>
-#include<algorithm>
-/**/
 using namespace std;
 
-/*rua
-struct rua {
-	data_t dist;
-	int flow_x;
-	int flow_y;
-};
-*/
+
 
 void Resize(pix_t in[MAXSIZE], pix_t out[MAXSIZE], int width, int height, int scale)
 {
@@ -178,9 +168,7 @@ void Displacement_Est(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], 
 
 			data_t sum_x = 0, sum_y = 0;
 			int count = 0;
-			/*rua
-			vector<rua> rua_a;
-			/**/
+
 			for (int ii = -n; ii <= n; ii++) {
 				for (int jj = -n; jj <= n; jj++) {
 					data_t r[5], _r[5], a00, a11, a01, b0, b1, _a00, _a01, _a11;
@@ -206,55 +194,16 @@ void Displacement_Est(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], 
 					t_x = _a00 * b0 - _a01 * b1;
 					t_y = -_a01 * b0 + _a11 * b1;
 
-					flow_x = fx + ii - i + t_x;
-					flow_y = fy + jj - j + t_y;
-					/*rua
-					struct rua rua_tmp;
-					rua_tmp.dist = t_x*t_x + t_y*t_y;
-					rua_tmp.flow_x = flow_x;
-					rua_tmp.flow_y = flow_y;
-					rua_a.push_back(rua_tmp);*/
-					data_t d = sqrt(t_x*t_x + t_y*t_y);
-					//cout << d << " ";
-					if (d < 3) {
-						sum_x += flow_x;
-						sum_y += flow_y;
-						count++;
-					}
-					
-					/*
 					if (t_x*t_x + t_y*t_y + (ii*ii+jj*jj)/1e3 < score) {
 						//cout << t_x*t_x + t_y*t_y << " "<< (ii*ii + jj*jj) / 1e2 << endl;
 						score = t_x*t_x + t_y*t_y + (ii*ii + jj*jj) / 1e3;
 						flow_x = fx + ii - i + t_x;
 						flow_y = fy + jj - j + t_y;
 					}
-					*/
 				}
-				//cout << endl;
-			}
-			//system("PAUSE");
-			/*rua
-			sort(rua_a.begin(), rua_a.end(), [](const rua &a, const rua &b) {
-				return a.dist < b.dist;
-			});
-			*/
-			for (int i = 0; i < count; i++)
-			{
-				sum_x += flow_x;
-				sum_y += flow_y;
-			}
-			flow_x = sum_x / count;
-			flow_y = sum_y / count;
-			
 
-			if (flow_x * flow_x + flow_y * flow_y > 4 && i>100 && i<110 &&j >100 &&j<110) {
-				//cout << i << "," << j << ":" << endl;
-				for (int k = 0; k < 5; k++) {
-					//cout << src_poly[i * width + j][k] << " " << dst_poly[i * width + j][k] << endl;
-				}
 			}
-			
+		
 			flow_out[i * width + j][0] = flow_x;
 			flow_out[i * width + j][1] = flow_y;
 		}
