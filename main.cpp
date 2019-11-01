@@ -63,27 +63,6 @@ int main() {
 		cvtColor(pre_rgb, pre, CV_BGR2GRAY);
 		cvtColor(aft, aft, CV_BGR2GRAY);
 		cvtColor(pre_rgb, pre_rgb, CV_BGR2GRAY);
-		/*
-		pre.copyTo(aft);
-		for (int i = 0; i < HEIGHT - L; i++) {
-			for (int j = 0; j < WIDTH - R; j++) {
-				aft.at<unsigned char>(i, j) = pre.at<unsigned char>(i + L, j + R);
-			}
-		}
-		*/
-
-		for (int i = 100; i < 120; i++) {
-			for (int j = 100; j < 120; j++)
-				cout << (int)(pre.at<unsigned char>(i, j)) << " ";
-			cout << endl;
-		}
-		cout << endl;
-		for (int i = 100; i < 120; i++) {
-			for (int j = 100; j < 120; j++)
-				cout << (int)(aft.at<unsigned char>(i, j)) << " ";
-			cout << endl;
-		}
-		cout << endl;
 
 		pix_t pre_img_1[MAXSIZE], aft_img_1[MAXSIZE], pre_img_2[MAXSIZE], aft_img_2[MAXSIZE];
 		data_t pre_poly[MAXSIZE][5], aft_poly[MAXSIZE][5], flow_in[MAXSIZE][2], flow_out[MAXSIZE][2];
@@ -98,7 +77,6 @@ int main() {
 		Poly_Exp(aft_img_1, aft_poly, WIDTH / 2, HEIGHT / 2);
 		Displacement_Est(pre_poly,aft_poly,flow_out,flow_in, WIDTH / 2, HEIGHT / 2,0);
 
-
 		Mat_to_Array(pre, pre_img_2, WIDTH, HEIGHT);
 		Mat_to_Array(aft, aft_img_2, WIDTH, HEIGHT);
 		Smooth(pre_img_2, pre_img_1, WIDTH, HEIGHT);
@@ -108,8 +86,7 @@ int main() {
 		Displacement_Est(pre_poly, aft_poly, flow_in, flow_out, WIDTH, HEIGHT, 2);
 		
 		Mat flow;
-		calcOpticalFlowFarneback(pre, aft, flow, 0.5, 2, 1, 1, 7, 1.5, cv::OPTFLOW_FARNEBACK_GAUSSIAN);
-
+		calcOpticalFlowFarneback(pre, aft, flow, 0.707, 5, 10, 3, 7, 1.5, cv::OPTFLOW_FARNEBACK_GAUSSIAN);
 
 		DrawOptFlowMap(flow_out, pre_rgb, 5, CV_RGB(0, 255, 0));
 		DrawOptFlowMap(flow, pre, 5, CV_RGB(0, 255, 0));
