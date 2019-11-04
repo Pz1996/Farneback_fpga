@@ -143,6 +143,10 @@ void Poly_Exp(pix_t in[MAXSIZE], data_t out[MAXSIZE][5], int width, int height)
 
 void Displacement_Est(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], data_t flow_in[MAXSIZE][2], data_t flow_out[MAXSIZE][2], int width, int height, int scale)
 {
+	data_t M[MAXSIZE][5];
+	UpdateMat(src_poly, dst_poly, flow_in, M, width, height, scale);
+	UpdateFlow(M, flow_out, width, height);
+	/*
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) { // go through all the input point
 			int fx, fy, dx = 0, dy = 0;
@@ -220,6 +224,89 @@ void Displacement_Est(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], 
 			// store the flow
 			flow_out[i * width + j][0] = flow_x;
 			flow_out[i * width + j][1] = flow_y;
+		}
+	}
+	*/
+}
+
+void UpdateMat(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], data_t flow_in[MAXSIZE][2], data_t M[MAXSIZE][5], int width, int height, int scale)
+{
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
+			int fx, fy, dx = 0, dy = 0;
+			if (scale != 0) {// get the priori flow
+				data_t dx_f, dy_f;
+				dx_f = flow_in[(i / scale)*(width / scale) + (j / scale)][0] * scale;
+				dy_f = flow_in[(i / scale)*(width / scale) + (j / scale)][1] * scale;
+				dx = (dx_f >= 0) ? (int)(dx_f + 0.5) : (int)(dx_f - 0.5);
+				dy = (dy_f >= 0) ? (int)(dy_f + 0.5) : (int)(dy_f - 0.5);
+			}
+			// get the valid dstination point
+			fx = i + dx;
+			fy = j + dy;
+			fx = (fx < 0) ? 0 : (fx >= height) ? height - 1 : fx;
+			fy = (fy < 0) ? 0 : (fy >= width) ? width - 1 : fy;
+			data_t r[5], _r[5], a00, a01, a11, b0, b1;
+			for (int k = 0; k < 5; k++) {
+				r[k] = src_poly[i*width + j][k];
+				_r[k] = dst_poly[fx * width + fy][k];
+			}
+			a00 = (r[2] + _r[2]) / 2;
+			a01 = (r[4] + _r[4]) / 4;
+			a11 = (r[3] + _r[3]) / 2;
+			b0 = (r[0] - _r[0]) / 2;
+			b1 = (r[1] - _r[1]) / 2;
+			
+			//Calculate G and h
+			M[i * width + j][0] = a00*a00 + a01*a01; // G(0, 0)
+			M[i * width + j][1] = a01*(a00 + a11); // G(0, 1)
+			M[i * width + j][2] = a11*a11 + a01*a01; // G(1, 1)
+			M[i * width + j][3] = a00*b0 + a01*b1; // H(0)
+			M[i * width + j][4] = a01*b0 + a11*b1; // H(1)
+		}
+	}
+}
+
+void UpdateFlow(data_t M[MAXSIZE][5], data_t flow_out[MAXSIZE][2], int width, int height)
+{
+	int n = (DE_SAMPLE_SIZE - 1) / 2;
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
+			int count = 0;
+			data_t r[5];
+			for (int k = 0; k < 5; k++)
+				r[k] = 0;
+			for (int ii = -n; ii <= n; ii++) {
+				for (int jj = -n; jj <= n; jj++) {
+					// find a neighbor and use the average parameter as G and h
+					int fx, fy;
+					fx = i + ii;
+					fy = j + jj;
+					if (fx >= 0 && fx < height && fy >= 0 && fy < width) {
+						for (int k = 0; k < 5; k++)
+							r[k] += M[fx*width + fy][k];
+						count++;
+					}
+				}
+			}
+			for (int k = 0; k < 5; k++)
+				r[k] = r[k] / count;
+			data_t g00, g01, g11, h0, h1;
+			g00 = r[0]; 
+			g01 = r[1];
+			g11 = r[2];
+			h0 = r[3];
+			h1 = r[4];
+
+			data_t _g00, _g01, _g11, t_x, t_y;
+			_g00 = g11 / (g00*g11 - g01*g01 + SMALL_NUM);
+			_g01 = -g01 / (g00*g11 - g01*g01 + SMALL_NUM);
+			_g11 = g00 / (g00*g11 - g01*g01 + SMALL_NUM);
+			t_x = _g00 * h0 - _g01 * h1; // the result of dx
+			t_y = -_g01 * h0 + _g11 * h1; // the result of dy
+
+			flow_out[i*width + j][0] = t_x;
+			flow_out[i*width + j][1] = t_y;
 		}
 	}
 }

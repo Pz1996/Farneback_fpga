@@ -31,7 +31,7 @@ void DrawOptFlowMap(data_t flow[MAXSIZE][2], Mat& cflowmap, int step, const Scal
 		{
 			data_t fx = flow[y*cflowmap.cols + x][1];
 			data_t fy = flow[y*cflowmap.cols + x][0];
-			if (fx * fx + fy * fy > 1) {
+			if (fx * fx + fy * fy > 2) {
 				line(cflowmap, Point(x, y), Point(cvRound(x + fx), cvRound(y + fy)), color);
 				circle(cflowmap, Point(cvRound(x + fx), cvRound(y + fy)), 1, color, -1);
 			}
@@ -43,7 +43,7 @@ void DrawOptFlowMap(const Mat& flow, Mat& cflowmap, int step, const Scalar& colo
 		for (int x = 0; x < cflowmap.cols; x += step)
 		{
 			const Point2f& fxy = flow.at< Point2f>(y, x);
-			if (fxy.x * fxy.x + fxy.y + fxy.y > 1) {
+			if (fxy.x * fxy.x + fxy.y + fxy.y > 2) {
 				line(cflowmap, Point(x, y), Point(cvRound(x + fxy.x), cvRound(y + fxy.y)), color);
 				circle(cflowmap, Point(cvRound(x + fxy.x), cvRound(y + fxy.y)), 1, color, -1);
 			}
@@ -51,7 +51,6 @@ void DrawOptFlowMap(const Mat& flow, Mat& cflowmap, int step, const Scalar& colo
 }
 
 int main() {
-	
 	VideoCapture cap(0);
 	if (!cap.isOpened())
 		return -1;
@@ -97,45 +96,5 @@ int main() {
 
 		waitKey(0);
 	}
-	
 	return 0;
 }
-
-
-/*
-Mat pre = imread("2hh.bmp", IMREAD_COLOR), aft;
-cvtColor(pre, pre, CV_BGR2GRAY);
-pre.copyTo(aft);
-for (int i = 0; i < HEIGHT - L; i++) {
-for (int j = 0; j < WIDTH - R; j++) {
-aft.at<unsigned char>(i, j) = pre.at<unsigned char>(i + L, j + R);
-}
-}
-//pix_t pre_in[MAXSIZE], aft_in[MAXSIZE];
-pix_t pre_1[MAXSIZE], aft_1[MAXSIZE];
-data_t pre_poly_1[MAXSIZE][5], aft_poly_1[MAXSIZE][5], flow_1[MAXSIZE][2];
-pix_t pre_2[MAXSIZE], aft_2[MAXSIZE];
-data_t pre_poly_2[MAXSIZE][5], aft_poly_2[MAXSIZE][5], flow_2[MAXSIZE][2];
-
-for (int i = 0; i < HEIGHT * WIDTH; i++) {
-pre_1[i] = pre.data[i];
-aft_1[i] = aft.data[i];
-}
-for (int i = 0; i < HEIGHT / SCALING_FACTOR; i++) {
-for (int j = 0; j < WIDTH / SCALING_FACTOR; j++) {
-pre_2[i*WIDTH / SCALING_FACTOR + j] = (pre_1[i * SCALING_FACTOR * WIDTH + j * SCALING_FACTOR] + pre_1[i * SCALING_FACTOR * WIDTH + j * SCALING_FACTOR + WIDTH] + pre_1[i * SCALING_FACTOR * WIDTH + j * SCALING_FACTOR + 1] + pre_1[i * SCALING_FACTOR * WIDTH + j * SCALING_FACTOR + WIDTH + 1]) / SCALING_FACTOR /  SCALING_FACTOR;
-aft_2[i*WIDTH / SCALING_FACTOR + j] = (aft_1[i * SCALING_FACTOR * WIDTH + j * SCALING_FACTOR] + aft_1[i * SCALING_FACTOR * WIDTH + j * SCALING_FACTOR + WIDTH] + aft_1[i * SCALING_FACTOR * WIDTH + j * SCALING_FACTOR + 1] + aft_1[i * SCALING_FACTOR * WIDTH + j * SCALING_FACTOR + WIDTH + 1]) / SCALING_FACTOR /  SCALING_FACTOR;
-}
-}
-Poly_Exp(pre_2, pre_poly_2, WIDTH / SCALING_FACTOR, HEIGHT / SCALING_FACTOR);
-Poly_Exp(aft_2, aft_poly_2, WIDTH / SCALING_FACTOR, HEIGHT / SCALING_FACTOR);
-Displacement_Est(pre_poly_2, aft_poly_2, NULL, flow_1, WIDTH / SCALING_FACTOR, HEIGHT / SCALING_FACTOR, 0);
-Poly_Exp(pre_1, pre_poly_1, WIDTH, HEIGHT);
-Poly_Exp(aft_1, aft_poly_1, WIDTH, HEIGHT);
-Displacement_Est(pre_poly_1, aft_poly_1, flow_1, flow_2, WIDTH, HEIGHT, SCALING_FACTOR);
-for (int i = 10; i < HEIGHT - 10; i++) {
-for (int j = 10; j < WIDTH - 10; j++) {
-cout << flow_2[i*WIDTH + j][0] <<" "<< flow_2[i*WIDTH + j][1] << endl;
-}
-}
-*/

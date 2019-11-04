@@ -43,3 +43,7 @@ best fits the target point
 @param scale parameter. show the scale factor between flow_in and the source images
 */
 void Displacement_Est(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], data_t flow_in[MAXSIZE][2], data_t flow_out[MAXSIZE][2], int width, int height, int scale = 1);
+
+void UpdateMat(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], data_t flow_in[MAXSIZE][2], data_t M[MAXSIZE][5], int width, int height, int scale = 1);
+
+void UpdateFlow(data_t M[MAXSIZE][5], data_t flow_out[MAXSIZE][2], int width, int height);
