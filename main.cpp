@@ -1,11 +1,13 @@
 #include <opencv2/opencv.hpp>
 #include "opencv2/highgui.hpp"
-#include "opencv2/optflow.hpp"
+#include "ref.h"
+//#include "opencv2/optflow.hpp"
 #include <string>
 #include <iostream>
 
 #include "define.h"
 #include "Farneback_of.h"
+
 using namespace std;
 using namespace cv;
 
@@ -59,7 +61,7 @@ int main() {
 	cvtColor(aft_rgb, aft, CV_BGR2GRAY);;
 	pix_t pre_img_1[MAXSIZE], aft_img_1[MAXSIZE], pre_img_2[MAXSIZE], aft_img_2[MAXSIZE];
 	data_t pre_poly[MAXSIZE][5], aft_poly[MAXSIZE][5], flow_in[MAXSIZE][2], flow_out[MAXSIZE][2];
-
+	/*
 	Mat_to_Array(pre, pre_img_1, WIDTH, HEIGHT);
 	Mat_to_Array(aft, aft_img_1, WIDTH, HEIGHT);
 	Resize(pre_img_1, pre_img_2, WIDTH, HEIGHT, 2);
@@ -69,17 +71,17 @@ int main() {
 	Poly_Exp(pre_img_1, pre_poly, WIDTH / 2, HEIGHT / 2);
 	Poly_Exp(aft_img_1, aft_poly, WIDTH / 2, HEIGHT / 2);
 	Displacement_Est(pre_poly, aft_poly, flow_out, flow_in, WIDTH / 2, HEIGHT / 2, 0);
-
+	*/
 	Mat_to_Array(pre, pre_img_2, WIDTH, HEIGHT);
 	Mat_to_Array(aft, aft_img_2, WIDTH, HEIGHT);
 	Smooth(pre_img_2, pre_img_1, WIDTH, HEIGHT);
 	Smooth(aft_img_2, aft_img_1, WIDTH, HEIGHT);
 	Poly_Exp(pre_img_1, pre_poly, WIDTH, HEIGHT);
 	Poly_Exp(aft_img_1, aft_poly, WIDTH, HEIGHT);
-	Displacement_Est(pre_poly, aft_poly, flow_in, flow_out, WIDTH, HEIGHT, 2);
+	Displacement_Est(pre_poly, aft_poly, flow_in, flow_out, WIDTH, HEIGHT, 0);
 
 	Mat flow;
-	calcOpticalFlowFarneback(pre, aft, flow, 0.5, 1, 10, 1, 7, 1.5, cv::OPTFLOW_FARNEBACK_GAUSSIAN);
+	my_calcOpticalFlowFarneback(pre, aft, flow, 0.5, 1, 11, 1, 7, 1.5, 0);
 
 	DrawOptFlowMap(flow_out, pre_rgb, 5, CV_RGB(0, 255, 0));
 	DrawOptFlowMap(flow, pre_rgb2, 5, CV_RGB(0, 255, 0));

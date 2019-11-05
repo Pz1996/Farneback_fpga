@@ -22,11 +22,11 @@ void Resize(pix_t in[MAXSIZE], pix_t out[MAXSIZE], int width, int height, int sc
 void Smooth(pix_t in[MAXSIZE], pix_t out[MAXSIZE], int width, int height)
 {
 	int coeff[25] = {
-		1,	2,	4,	2,	1,
-		2,	4,	8,	4,	2,
-		4,	8,	16,	8,	4,
-		2,	4,	8,	4,	2,
-		1,	2,	4,	2,	1
+		1,	4,	6,	4,	1,
+		4,	16,	24,	16,	4,
+		6,	24,	36,	24,	6,
+		4,	16,	24,	16,	4,
+		1,	4,	6,	4,	1
 	};
 	// use a kernel to converlute the image
 	for (int i = 0; i < height; i++) {
@@ -46,7 +46,7 @@ void Smooth(pix_t in[MAXSIZE], pix_t out[MAXSIZE], int width, int height)
 					sum += in[px * width + py] * coeff[cnt++];
 				}
 			}
-			out[i*width + j] = (pix_t)(sum / 100);
+			out[i*width + j] = (pix_t)(sum / 256);
 		}
 	}
 }
@@ -145,7 +145,7 @@ void Displacement_Est(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], 
 {
 	data_t M[MAXSIZE][5], flow_t[MAXSIZE][2];
 	UpdateMat(src_poly, dst_poly, flow_in, M, width, height, scale);
-	UpdateFlow(M, flow_t, width, height);
+	UpdateFlow(M, flow_out, width, height);
 	/*
 	SmoothFlow(flow_t, flow_in, width, height);
 	UpdateMat(src_poly, dst_poly, flow_in, M, width, height, 1);
@@ -153,8 +153,9 @@ void Displacement_Est(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], 
 	SmoothFlow(flow_t, flow_in, width, height);
 	UpdateMat(src_poly, dst_poly, flow_in, M, width, height, 1);
 	UpdateFlow(M, flow_t, width, height);
-	*/
+	
 	SmoothFlow(flow_t, flow_out, width, height);
+	*/
 }
 
 void UpdateMat(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], data_t flow_in[MAXSIZE][2], data_t M[MAXSIZE][5], int width, int height, int scale)
