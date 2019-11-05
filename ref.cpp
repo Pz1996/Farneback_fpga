@@ -76,8 +76,33 @@ void my_calcOpticalFlowFarneback(const Mat & prev0, const Mat & next0, Mat & flo
 	}
 }
 
-
+#define DEBUG_EXP
 #ifdef DEBUG_EXP
+void FarnebackPolyExp(const Mat & src, Mat & dst, int n, double sigma) {
+	pix_t in[MAXSIZE];
+	data_t out[MAXSIZE][5];
+	int width = src.cols;
+	int height = src.rows;
+	float* srca, *dsta;
+
+	for (int i = 0; i < height; i++) {
+		srca = (float*)(src.data + i*src.step);
+		for (int j = 0; j < width; j++)
+			in[i*width + j] = (pix_t)srca[j];
+	}
+	Poly_Exp(in, out, width, height);
+	dst.create(height, width, CV_32FC(5));
+	for (int i = 0; i < height; i++) {
+		dsta = (float*)(dst.data + i*dst.step);
+		for (int j = 0; j < width; j++) {
+			dsta[j * 5] = out[i*width + j][0];
+			dsta[j * 5 + 1] = out[i*width + j][1];
+			dsta[j * 5 + 2] = out[i*width + j][2];
+			dsta[j * 5 + 3] = out[i*width + j][3];
+			dsta[j * 5 + 4] = out[i*width + j][4];
+		}
+	}
+}
 #else
 void FarnebackPolyExp(const Mat & src, Mat & dst, int n, double sigma)
 {
@@ -220,11 +245,39 @@ void FarnebackUpdateMatrices(const Mat & _R0, const Mat & _R1, const Mat & _flow
 	int height;
 	height = _R0.rows;
 	width = _R0.cols;
-	float *R0, *R1, *flow, *M;
-
+	float *R0, *R1, *flow, *Ma;
+	
 	for (int i = 0; i < height; i++) {
+		R0 = (float*)(_R0.data + i*_R0.step);
+		R1 = (float*)(_R1.data + i*_R1.step);
+		flow = (float*)(_flow.data + i*_flow.step);
 		for (int j = 0; j < width; j++) {
-			R0 = (float*)(_R0.data + i*_R0.step);
+			src_poly[i*width + j][0] = R0[j * 5 + 0];
+			src_poly[i*width + j][1] = R0[j * 5 + 1];
+			src_poly[i*width + j][2] = R0[j * 5 + 2];
+			src_poly[i*width + j][3] = R0[j * 5 + 3];
+			src_poly[i*width + j][4] = R0[j * 5 + 4];
+			dst_poly[i*width + j][0] = R1[j * 5 + 0];
+			dst_poly[i*width + j][1] = R1[j * 5 + 1];
+			dst_poly[i*width + j][2] = R1[j * 5 + 2];
+			dst_poly[i*width + j][3] = R1[j * 5 + 3];
+			dst_poly[i*width + j][4] = R1[j * 5 + 4];
+			flow_in[i*width + j][0] = flow[j * 2 + 1];
+			flow_in[i*width + j][1] = flow[j * 2];
+		}
+	}
+
+	UpdateMat(src_poly, dst_poly, flow_in, M, width, height, 1);
+	_M.create(height, width, CV_32FC(5));
+	for (int i = 0; i < height; i++) {
+		Ma = (float*)(_M.data + i*_M.step);
+		for (int j = 0; j < width; j++) {
+			Ma[j * 5 + 0] = M[i*width + j][0];
+			Ma[j * 5 + 1] = M[i*width + j][1];
+			Ma[j * 5 + 2] = M[i*width + j][2];
+			Ma[j * 5 + 3] = M[i*width + j][3];
+			Ma[j * 5 + 4] = M[i*width + j][4];
+
 		}
 	}
 
@@ -302,7 +355,30 @@ void FarnebackUpdateMatrices(const Mat & _R0, const Mat & _R1, const Mat & _flow
 }
 #endif
 
+//#define DEBUG_FLOW
 #ifdef DEBUG_FLOW
+void FarnebackUpdateFlow_Blur(const Mat & _R0, const Mat & _R1, Mat & _flow, Mat & _M, int block_size, bool update_matrices) {
+	data_t M[MAXSIZE][5];
+	data_t flow_out[MAXSIZE][2];
+	int width = _R0.cols;
+	int height = _R0.rows;
+	float *Ma, *flow;
+	for (int i = 0; i < height; i++) {
+		Ma = (float*)(_M.data + i*_M.step);
+		for (int j = 0; j < width; j++) {
+			for (int k = 0; k < 5; k++)
+				M[i*width + j][k] = Ma[j * 5 + k];
+		}
+	}
+	UpdateFlow(M, flow_out,width, height);
+	for (int i = 0; i < height; i++) {
+		flow = (float*)(_flow.data + i*_flow.step);
+		for (int j = 0; j < width; j++) {
+			flow[j * 2] = flow_out[i*width + j][1];
+			flow[j * 2 + 1] = flow_out[i*width + j][0];
+		}
+	}
+}
 #else
 void FarnebackUpdateFlow_Blur(const Mat & _R0, const Mat & _R1, Mat & _flow, Mat & _M, int block_size, bool update_matrices)
 {

@@ -88,7 +88,7 @@ int main() {
 
 	imshow("fpga", pre_rgb);
 	imshow("software", pre_rgb2);
-	imshow("aft", aft_rgb);
+	//imshow("aft", aft_rgb);
 
 	waitKey(0);
 	return 0;
