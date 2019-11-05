@@ -143,90 +143,18 @@ void Poly_Exp(pix_t in[MAXSIZE], data_t out[MAXSIZE][5], int width, int height)
 
 void Displacement_Est(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], data_t flow_in[MAXSIZE][2], data_t flow_out[MAXSIZE][2], int width, int height, int scale)
 {
-	data_t M[MAXSIZE][5];
+	data_t M[MAXSIZE][5], flow_t[MAXSIZE][2];
 	UpdateMat(src_poly, dst_poly, flow_in, M, width, height, scale);
-	UpdateFlow(M, flow_out, width, height);
+	UpdateFlow(M, flow_t, width, height);
 	/*
-	for (int i = 0; i < height; i++) {
-		for (int j = 0; j < width; j++) { // go through all the input point
-			int fx, fy, dx = 0, dy = 0;
-			int flow_x = 0, flow_y = 0;
-			data_t score = 1e10;
-			int n = (DE_SAMPLE_SIZE - 1) / 2;
-			data_t sigma = 1.5;
-			data_t m[DE_SAMPLE_SIZE], *g, s = 0;
-			g = m + n;
-			//get a Gaussian distribution and normalize it
-			for (int x = -n; x <= n; x++) {
-				g[x] = exp(-x*x / (2 * sigma*sigma));
-				s += g[x];
-			}
-			for (int x = -n; x <= n; x++)
-				g[x] = g[x] / s;
-
-
-			if (scale != 0) {  // get the priori flow
-				data_t dx_f, dy_f;
-				dx_f = flow_in[(i / scale)*(width / scale) + (j / scale)][0] * scale;
-				dy_f = flow_in[(i / scale)*(width / scale) + (j / scale)][1] * scale;
-				dx = (dx_f >= 0) ? (int)(dx_f + 0.5) : (int)(dx_f - 0.5);
-				dy = (dy_f >= 0) ? (int)(dy_f + 0.5) : (int)(dy_f - 0.5);
-			}
-			// get the valid destination point
-			fx = i + dx;
-			fy = j + dy;
-			if (fx < n) fx = n;
-			if (fx >= height - n) fx = height - n - 1;
-			if (fy < n) fy = n;
-			if (fy >= width - n) fy = width - n - 1;
-
-			data_t sum_x = 0, sum_y = 0;
-			int count = 0;
-
-			for (int ii = -n; ii <= n; ii++) {
-				for (int jj = -n; jj <= n; jj++) {//search the neibor of the destination point
-					data_t r[5], _r[5], a00, a11, a01, b0, b1, _a00, _a01, _a11;
-					data_t t_x, t_y;
-					//  get the poly_exp result
-					for (int k = 0; k < 5; k++) {
-						r[k] = src_poly[i * width + j][k];
-						_r[k] = dst_poly[(fx + ii) * width + fy + jj][k];
-					}
-					a00 = (r[2] + _r[2]) / 2;
-					a01 = (r[4] + _r[4]) / 4;
-					a11 = (r[3] + _r[3]) / 2;
-					b0 = (r[0] - _r[0]) / 2;
-					b1 = (r[1] - _r[1]) / 2;
-					
-					// use 1e-9 to make sure the result is not 0, otherwise result makes no sense
-					if (b0<1e-9 && b0 >  -1e-9)
-						b0 = 1e-9;
-					if (b1<1e-9 && b1 >  -1e-9)
-						b1 = 1e-9;
-
-					_a00 = a11 / (a00*a11 - a01*a01);
-					_a01 = -a01 / (a00*a11 - a01*a01);
-					_a11 = a00 / (a00*a11 - a01*a01);
-					t_x = _a00 * b0 - _a01 * b1; // the result of dx
-					t_y = -_a01 * b0 + _a11 * b1; // the result of dy
-
-					if (t_x*t_x + t_y*t_y + (ii*ii+jj*jj)/1e3 < score) {
-						// use (ii*ii+jj*jj)/1e3 to make the central point more credible
-						//if the displacement is smaller, score is smaller, use it
-						score = t_x*t_x + t_y*t_y + (ii*ii + jj*jj) / 1e3;
-						flow_x = fx + ii - i + t_x;
-						flow_y = fy + jj - j + t_y;
-					}
-				}
-
-			}
-
-			// store the flow
-			flow_out[i * width + j][0] = flow_x;
-			flow_out[i * width + j][1] = flow_y;
-		}
-	}
+	SmoothFlow(flow_t, flow_in, width, height);
+	UpdateMat(src_poly, dst_poly, flow_in, M, width, height, 1);
+	UpdateFlow(M, flow_t, width, height);
+	SmoothFlow(flow_t, flow_in, width, height);
+	UpdateMat(src_poly, dst_poly, flow_in, M, width, height, 1);
+	UpdateFlow(M, flow_t, width, height);
 	*/
+	SmoothFlow(flow_t, flow_out, width, height);
 }
 
 void UpdateMat(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], data_t flow_in[MAXSIZE][2], data_t M[MAXSIZE][5], int width, int height, int scale)
@@ -263,6 +191,22 @@ void UpdateMat(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], data_t 
 			M[i * width + j][2] = a11*a11 + a01*a01; // G(1, 1)
 			M[i * width + j][3] = a00*b0 + a01*b1; // H(0)
 			M[i * width + j][4] = a01*b0 + a11*b1; // H(1)
+
+			data_t G00, G11;
+			G00 = a00*a00 + a01*a01;
+			G11 = a11*a11 + a01*a01;
+			/*
+			if (G00 > 100000 * G11 || G11 > 100000 * G00) {
+				cout << "(" << i << "," << j << ")" << endl;
+				for (int k = 0; k < 5; k++)
+					cout << r[k] << " ";
+				cout << endl;
+				for (int k = 0; k < 5; k++)
+					cout << _r[k] << " ";
+				cout << endl;
+			}
+			*/
+
 		}
 	}
 }
@@ -304,11 +248,68 @@ void UpdateFlow(data_t M[MAXSIZE][5], data_t flow_out[MAXSIZE][2], int width, in
 			_g11 = g00 / (g00*g11 - g01*g01 + SMALL_NUM);
 			t_x = _g00 * h0 - _g01 * h1; // the result of dx
 			t_y = -_g01 * h0 + _g11 * h1; // the result of dy
-
+			
+			while (t_x * t_x + t_y * t_y > 4000) {
+				t_x /= 10;
+				t_y /= 10;
+			}
+			/*							  
+			if (t_x * t_x + t_y * t_y > 10000) {
+				cout <<"("<<i<<", "<< j <<")"<< t_x <<" "<< t_y << endl;
+				cout << g00 << " " << g01 << " " << g11 << " " << h0 << " " << h1 << endl;
+				cout << _g00 << " " << _g01 << " " << _g11 << endl;
+			}
+			*/
 			flow_out[i*width + j][0] = t_x;
 			flow_out[i*width + j][1] = t_y;
 		}
 	}
 }
+
+void SmoothFlow(data_t flow_in[MAXSIZE][2], data_t flow_out[MAXSIZE][2], int width, int height)
+{
+	int n = 1;
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
+			data_t sum[2], max[2], score;
+			int count = 0;
+			sum[0] = sum[1] = max[0] = max[1] = score = 0;
+			for (int ii = -n; ii <= n; ii++) {
+				for (int jj = -n; jj <= n; jj++) {
+					int fx = i + ii;
+					int fy = j + jj;
+					if (fx >= 0 && fx < height&&fy >= 0 && fy < width) {
+						data_t flow_x, flow_y;
+
+						if (fx < POLY_EXP_SAMPLE_SIZE / 2 || fx + POLY_EXP_SAMPLE_SIZE / 2 > height ||
+							fy < POLY_EXP_SAMPLE_SIZE / 2 || fy + POLY_EXP_SAMPLE_SIZE / 2 > width){
+							flow_x = 0;
+							flow_y = 0;
+						}
+						else {
+							flow_x = flow_in[fx*width + fy][0];
+							flow_y = flow_in[fx*width + fy][1];
+						}
+							
+						if (flow_x * flow_x + flow_y *flow_y > score) {
+							max[0] = flow_x;
+							max[1] = flow_y;
+							score = flow_x * flow_x + flow_y *flow_y;
+						}
+						sum[0] += flow_x;
+						sum[1] += flow_y;
+						count++;
+					}
+				}
+			}
+			count--;
+			flow_out[i*width + j][0] = (sum[0] - max[0]) / count;
+			flow_out[i*width + j][1] = (sum[1] - max[1]) / count;
+		}
+	}
+
+}
+
+
 
 

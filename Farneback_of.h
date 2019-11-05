@@ -2,7 +2,7 @@
 #include "define.h"
 #include <math.h>
 #define POLY_EXP_SAMPLE_SIZE 15
-#define DE_SAMPLE_SIZE 7
+#define DE_SAMPLE_SIZE 11
 #define MAXSIZE (WIDTH)*(HEIGHT)
 #define SCALING_FACTOR 5
 
@@ -47,3 +47,5 @@ void Displacement_Est(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], 
 void UpdateMat(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], data_t flow_in[MAXSIZE][2], data_t M[MAXSIZE][5], int width, int height, int scale = 1);
 
 void UpdateFlow(data_t M[MAXSIZE][5], data_t flow_out[MAXSIZE][2], int width, int height);
+
+void SmoothFlow(data_t flow_in[MAXSIZE][2], data_t flow_out[MAXSIZE][2], int width, int height);
