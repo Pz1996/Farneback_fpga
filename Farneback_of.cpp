@@ -251,24 +251,11 @@ void UpdateFlow(data_t M[MAXSIZE][5], data_t flow_out[MAXSIZE][2], int width, in
 			h0 = r[3];
 			h1 = r[4];
 
-			data_t _g00, _g01, _g11, t_x, t_y;
-			_g00 = g11 / (g00*g11 - g01*g01 + SMALL_NUM);
-			_g01 = -g01 / (g00*g11 - g01*g01 + SMALL_NUM);
-			_g11 = g00 / (g00*g11 - g01*g01 + SMALL_NUM);
-			t_x = _g00 * h0 - _g01 * h1; // the result of dx
-			t_y = -_g01 * h0 + _g11 * h1; // the result of dy
-			
-			while (t_x * t_x + t_y * t_y > 4000) {
-				t_x /= 10;
-				t_y /= 10;
-			}
-			/*							  
-			if (t_x * t_x + t_y * t_y > 10000) {
-				cout <<"("<<i<<", "<< j <<")"<< t_x <<" "<< t_y << endl;
-				cout << g00 << " " << g01 << " " << g11 << " " << h0 << " " << h1 << endl;
-				cout << _g00 << " " << _g01 << " " << _g11 << endl;
-			}
-			*/
+			data_t t_x, t_y, idet;
+			idet = 1.0f / (g00*g11 - g01*g01 + SMALL_NUM);
+			t_x = (g11*h0 - g01*h1) * idet;
+			t_y = (g00*h1 - g01*h0) * idet;
+
 			flow_out[i*width + j][0] = t_x;
 			flow_out[i*width + j][1] = t_y;
 		}
