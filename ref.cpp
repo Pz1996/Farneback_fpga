@@ -76,7 +76,7 @@ void my_calcOpticalFlowFarneback(const Mat & prev0, const Mat & next0, Mat & flo
 	}
 }
 
-#define DEBUG_EXP
+//#define DEBUG_EXP
 #ifdef DEBUG_EXP
 void FarnebackPolyExp(const Mat & src, Mat & dst, int n, double sigma) {
 	pix_t in[MAXSIZE];
@@ -234,7 +234,7 @@ void FarnebackPolyExp(const Mat & src, Mat & dst, int n, double sigma)
 }
 #endif
 
-//#define DEBUG_MAT
+#define DEBUG_MAT
 #ifdef DEBUG_MAT
 void FarnebackUpdateMatrices(const Mat & _R0, const Mat & _R1, const Mat & _flow, Mat & _M, int _y0, int _y1) {
 	data_t src_poly[MAXSIZE][5];

@@ -180,23 +180,31 @@ void UpdateMat(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], data_t 
 				r[k] = src_poly[i*width + j][k];
 				_r[k] = dst_poly[fx * width + fy][k];
 			}
-			a00 = (r[2] + _r[2]) / 2;
-			a01 = (r[4] + _r[4]) / 4;
-			a11 = (r[3] + _r[3]) / 2;
-			b0 = (r[0] - _r[0]) / 2;
-			b1 = (r[1] - _r[1]) / 2;
-			
+			a00 = (r[2] + _r[2]) / 2; //r4
+			a01 = (r[4] + _r[4]) / 4; //r6
+			a11 = (r[3] + _r[3]) / 2; //r5
+			b0 = (r[0] - _r[0]) / 2; //r2
+			b1 = (r[1] - _r[1]) / 2; //r3
+
+			b0 += a00 * dy + a01 * dx;
+			b1 += a01 * dy + a11 * dx;
+
+			//if ((dx != 0 || dy != 0)) {
+			//	cout << dx << " " << dy << endl;
+			//}
+
+
 			//Calculate G and h
 			M[i * width + j][0] = a00*a00 + a01*a01; // G(0, 0)
 			M[i * width + j][1] = a01*(a00 + a11); // G(0, 1)
 			M[i * width + j][2] = a11*a11 + a01*a01; // G(1, 1)
 			M[i * width + j][3] = a00*b0 + a01*b1; // H(0)
 			M[i * width + j][4] = a01*b0 + a11*b1; // H(1)
-
+			/*
 			data_t G00, G11;
 			G00 = a00*a00 + a01*a01;
 			G11 = a11*a11 + a01*a01;
-			/*
+			
 			if (G00 > 100000 * G11 || G11 > 100000 * G00) {
 				cout << "(" << i << "," << j << ")" << endl;
 				for (int k = 0; k < 5; k++)
