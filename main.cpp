@@ -1,7 +1,7 @@
 #include <opencv2/opencv.hpp>
 #include "opencv2/highgui.hpp"
 #include "ref.h"
-//#include "opencv2/optflow.hpp"
+#include "opencv2/optflow.hpp"
 #include <string>
 #include <iostream>
 
@@ -81,11 +81,16 @@ int main() {
 	Displacement_Est(pre_poly, aft_poly, flow_in, flow_out, WIDTH, HEIGHT, 2);
 	
 	Mat flow;
-	my_calcOpticalFlowFarneback(pre, aft, flow, 0.5, 1, 11, 1, 7, 1.5, 0);
+	calcOpticalFlowFarneback(pre, aft, flow, 0.707, 5, 11, 3, 7, 1.5, 0);
+
+
+	Mat k = aft_rgb - pre_rgb;
+
 
 	DrawOptFlowMap(flow_out, pre_rgb, 5, CV_RGB(0, 255, 0));
 	DrawOptFlowMap(flow, pre_rgb2, 5, CV_RGB(0, 255, 0));
 
+	imshow("flow", k);
 	imshow("fpga", pre_rgb);
 	imshow("software", pre_rgb2);
 	//imshow("aft", aft_rgb);
