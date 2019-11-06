@@ -186,8 +186,8 @@ void UpdateMat(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], data_t 
 			b0 = (r[0] - _r[0]) / 2; //r2
 			b1 = (r[1] - _r[1]) / 2; //r3
 
-			b0 += a00 * dy + a01 * dx;
-			b1 += a01 * dy + a11 * dx;
+			b0 += a00 * dx + a01 * dy;
+			b1 += a01 * dx + a11 * dy;
 
 			//if ((dx != 0 || dy != 0)) {
 			//	cout << dx << " " << dy << endl;

@@ -71,7 +71,7 @@ int main() {
 	Poly_Exp(pre_img_1, pre_poly, WIDTH / 2, HEIGHT / 2);
 	Poly_Exp(aft_img_1, aft_poly, WIDTH / 2, HEIGHT / 2);
 	Displacement_Est(pre_poly, aft_poly, flow_out, flow_in, WIDTH / 2, HEIGHT / 2, 0);
-	*/
+	
 	Mat_to_Array(pre, pre_img_2, WIDTH, HEIGHT);
 	Mat_to_Array(aft, aft_img_2, WIDTH, HEIGHT);
 	Smooth(pre_img_2, pre_img_1, WIDTH, HEIGHT);
@@ -79,14 +79,14 @@ int main() {
 	Poly_Exp(pre_img_1, pre_poly, WIDTH, HEIGHT);
 	Poly_Exp(aft_img_1, aft_poly, WIDTH, HEIGHT);
 	Displacement_Est(pre_poly, aft_poly, flow_in, flow_out, WIDTH, HEIGHT, 0);
-
+	*/
 	Mat flow;
 	my_calcOpticalFlowFarneback(pre, aft, flow, 0.5, 1, 11, 1, 7, 1.5, 0);
 
-	DrawOptFlowMap(flow_out, pre_rgb, 5, CV_RGB(0, 255, 0));
+	//DrawOptFlowMap(flow_out, pre_rgb, 5, CV_RGB(0, 255, 0));
 	DrawOptFlowMap(flow, pre_rgb2, 5, CV_RGB(0, 255, 0));
 
-	imshow("fpga", pre_rgb);
+	//imshow("fpga", pre_rgb);
 	imshow("software", pre_rgb2);
 	//imshow("aft", aft_rgb);
 
