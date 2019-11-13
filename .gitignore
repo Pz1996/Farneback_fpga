@@ -3,3 +3,11 @@
 *.vcxproj.filters
 *.vcxproj.user
 /x64
+*.jpg
+/.apc
+/.cproject
+/.project
+/.settings
+vivado_hls.app
+main.cpp
+ref.*
