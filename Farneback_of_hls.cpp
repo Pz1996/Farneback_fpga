@@ -102,7 +102,7 @@ void UpdateFlow_hls(hls::stream<Data_5>&M, hls::stream<Data_2>&flow_out, int wid
 #pragma HLS LOOP_TRIPCOUNT min=320 max=640
 #pragma HLS PIPELINE
 			Data_2 out = {0, 0};
-			if((unsigned)(i - K/2) < height-K && (unsigned)(j - K/2) < width-K){
+			if((unsigned)(i - K/2) < height-K+1 && (unsigned)(j - K/2) < width-K+1){
 				Data_5 m_in = vconv.read()/(K*K);
 				data_t g00, g01, g11, h0, h1;
 				g00 = m_in.r0;

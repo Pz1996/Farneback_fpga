@@ -258,7 +258,7 @@ void UpdateFlow(data_t **M, data_t **flow_out, int width, int height)
 
 			data_t t_x = 0, t_y = 0, idet;
 			int K = DE_SAMPLE_SIZE;
-			if((unsigned)(i - K/2) < height-K && (unsigned)(j - K/2) < width-K){
+			if((unsigned)(i - K/2) < height-K+1 && (unsigned)(j - K/2) < width-K+1){
 				idet = 1.0f / (g00*g11 - g01*g01 + SMALL_NUM);
 				t_x = (g11*h0 - g01*h1) * idet;
 				t_y = (g00*h1 - g01*h0) * idet;

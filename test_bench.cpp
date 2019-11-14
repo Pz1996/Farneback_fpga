@@ -1,5 +1,6 @@
-#include "Farneback_of.h"
+ #include "Farneback_of.h"
 #include "Farneback_of_hls.h"
+#include <stdio.h>
 #include <iostream>
 using namespace std;
 
@@ -76,10 +77,52 @@ int test_mat_2_1(){
 }
 
 int test_flow(){
+	data_t **M;
+	data_t **flow_out;
+	hls::stream<Data_5> hls_M("hls_M");
+	hls::stream<Data_2> hls_flow_out("hls_flow_out");
+	M = new data_t*[MAXSIZE];
+	flow_out = new data_t*[MAXSIZE];
+	for(int i=0; i<MAXSIZE; i++){
+		M[i] = new data_t[5];
+		flow_out[i] = new data_t[2];
+	}
 
+	//Generate input data
+	for(int i=0;i<WIDTH*HEIGHT;i++){
+		Data_5 d5;
+		M[i][0] = d5.r0 = i%255;
+		M[i][1] = d5.r1 = i%233;
+		M[i][2] = d5.r2 = i%244;
+		M[i][3] = d5.r3 = i%222;
+		M[i][4] = d5.r4 = i%211;
+		hls_M.write(d5);
 
+	}
+
+	//ref model
+	UpdateFlow(M, flow_out, WIDTH, HEIGHT);
+	//dut model
+	UpdateFlow_hls(hls_M, hls_flow_out, WIDTH, HEIGHT);
+
+	//check
+	int err_cnt = 0;
+	for(int i=0;i<WIDTH*HEIGHT;i++){
+		Data_2 d2;
+		d2 = hls_flow_out.read();
+		if((d2.r0 - flow_out[i][0])*(d2.r1 - flow_out[i][1]) > 1 || (d2.r0 - flow_out[i][0])*(d2.r1 - flow_out[i][1]) < -1){
+			err_cnt++;
+			printf("%d:(%f,%f) (%f,%f)\n",i, d2.r0, d2.r1, flow_out[i][0],flow_out[i][1]);
+		}
+	}
+
+	if(err_cnt == 0)
+		cout << "*** TEST PASSED ***" << endl;
+	else
+		cout << err_cnt << " errors are detected!\n"<< "*** TEST FAILED ***" << endl;
+	return (err_cnt == 0)? 0 : -1;
 }
 
 int main(){
-	return test_mat_2_1();
+	return test_flow();
 }
