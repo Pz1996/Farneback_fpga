@@ -146,10 +146,7 @@ void Displacement_Est(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], 
 	/*
 	data_t M[MAXSIZE][5], flow_t[MAXSIZE][2];
 	UpdateMat(src_poly, dst_poly, flow_in, M, width, height, scale);
-	UpdateFlow(M, flow_t, width, height);
-	UpdateMat(src_poly, dst_poly, flow_t, M, width, height, 1);
 	UpdateFlow(M, flow_out, width, height);
-*/
 
 	/*
 	SmoothFlow(flow_t, flow_in, width, height);
