@@ -27,7 +27,7 @@ void Mat_to_Array(Mat& m, pix_t* dst, int width, int height) {
 
 }
 
-void DrawOptFlowMap(data_t flow[MAXSIZE][2], Mat& cflowmap, int step, const Scalar& color) {
+void DrawOptFlowMap(data_t **flow, Mat& cflowmap, int step, const Scalar& color) {
 	for (int y = 0; y < cflowmap.rows; y += step)
 		for (int x = 0; x < cflowmap.cols; x += step)
 		{
@@ -60,8 +60,21 @@ int main() {
 	cvtColor(pre_rgb, pre, CV_BGR2GRAY);
 	cvtColor(aft_rgb, aft, CV_BGR2GRAY);;
 	pix_t pre_img_1[MAXSIZE], aft_img_1[MAXSIZE], pre_img_2[MAXSIZE], aft_img_2[MAXSIZE];
-	data_t pre_poly[MAXSIZE][5], aft_poly[MAXSIZE][5], flow_in[MAXSIZE][2], flow_out[MAXSIZE][2];
-	
+	//data_t pre_poly[MAXSIZE][5], aft_poly[MAXSIZE][5], flow_in[MAXSIZE][2], flow_out[MAXSIZE][2];
+	data_t ** pre_poly, ** aft_poly, **flow_in, **flow_out;
+	pre_poly = new data_t *[MAXSIZE];
+	aft_poly = new data_t *[MAXSIZE];
+	flow_in = new data_t *[MAXSIZE];
+	flow_out = new data_t *[MAXSIZE];
+	for (int i = 0; i < MAXSIZE; i++) {
+		pre_poly[i] = new data_t[5];
+		aft_poly[i] = new data_t[5];
+		flow_in[i] = new data_t[2];
+		flow_out[i] = new data_t[2];
+	}
+
+
+
 	Mat_to_Array(pre, pre_img_1, WIDTH, HEIGHT);
 	Mat_to_Array(aft, aft_img_1, WIDTH, HEIGHT);
 	Resize(pre_img_1, pre_img_2, WIDTH, HEIGHT, 2);

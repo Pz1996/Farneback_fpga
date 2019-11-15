@@ -26,7 +26,7 @@ void Smooth(pix_t in[MAXSIZE], pix_t out[MAXSIZE], int width, int height);
 @param width parameter. specifying the input image's width
 @param height parameter. specifying the input image's height
 */
-void Poly_Exp(pix_t in[MAXSIZE], data_t out[MAXSIZE][5], int width, int height);
+void Poly_Exp(pix_t *in, data_t **out, int width, int height);
 
 /** @brief Naive displacement estimation. Search the neighbors of the aim point and select the point
 best fits the target point
@@ -38,7 +38,7 @@ best fits the target point
 @param height parameter. specifying the input image's height
 @param scale parameter. show the scale factor between flow_in and the source images
 */
-void Displacement_Est(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], data_t flow_in[MAXSIZE][2], data_t flow_out[MAXSIZE][2], int width, int height, int scale = 1);
+void Displacement_Est(data_t** src_poly, data_t** dst_poly, data_t** flow_in, data_t** flow_out, int width, int height, int scale = 1);
 
 void UpdateMat(data_t** src_poly, data_t** dst_poly, data_t** flow_in, data_t** M, int width, int height, int scale = 1);
 
