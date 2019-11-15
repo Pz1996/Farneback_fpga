@@ -1,101 +1,13 @@
 #include "Farneback_of_hls.h"
 
 void Poly_Exp_hls_strm(hls::stream<pix_t>& in, hls::stream<Data_5> &out, int width, int height){
-
-}
-
-/*
-Data_5 Cal_poly_kernel(data_t in[POLY_EXP_SAMPLE_SIZE * POLY_EXP_SAMPLE_SIZE * 5]){
-#pragma HLS ARRAY_PARTITION variable=in complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=in cyclic factor=5 dim=1
-#pragma HLS PIPELINE
-	Data_5 out_val = {0,0,0,0,0};
-	int n = (POLY_EXP_SAMPLE_SIZE - 1) / 2;
-	data_t coeff[POLY_EXP_SAMPLE_SIZE * POLY_EXP_SAMPLE_SIZE * 5];
-#pragma HLS ARRAY_PARTITION variable=coeff complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=coeff cyclic factor=5 dim=1
-		data_t sigma = 1.5;
-		data_t m[POLY_EXP_SAMPLE_SIZE], *g, s = 0;
-		g = m + n;
-
-		for (int x = -n; x <= n; x++) {
-			g[x] = exp(-x*x / (2 * sigma*sigma));
-			s += g[x];
-		}
-		// calculate a Gaussian distribution and normalize it, store in g[]
-		for (int x = -n; x <= n; x++)
-			g[x] = g[x] / s;
-
-		data_t a, b, c, d, X;
-		data_t ig00, ig11, ig03, ig33, ig55;
-		// delta(d) = [B_ W B]^-1 B_ W f
-		// B_ W B = G
-			a = b = c = d = 0;
-		// invG:
-		// [ x        e  e    ]
-		// [    y             ]
-		// [       y          ]
-		// [ e        z       ]
-		// [ e           z    ]
-		// [                u ]
-
-		//calculate mat G
-		for (int y = -n; y <= n; y++)
-			for (int x = -n; x <= n; x++)
-			{
-				a += g[y] * g[x];
-				b += g[y] * g[x] * x*x;
-				c += g[y] * g[x] * x*x*x*x;
-				d += g[y] * g[x] * x*x*y*y;
-			}
-		// calculate mat G_inv, according to the special structure
-		X = a*c*c + b*b*d * 2 - a*d*d - b*b*c * 2;
-		ig11 = 1 / b;
-		ig33 = (a*c - b*b) / X;
-		ig55 = 1 / d;
-		ig03 = (b*d - c*b) / X;
-
-		//calculate the coeff, which makes the poly_exp like 5 converlutional operate
-		for (int i = -n; i <= n; i++) {
-			for (int j = -n; j <= n; j++) {
-				data_t b1, b2, b3, b4, b5, b6;
-				b1 = g[i] * g[j];
-				b2 = i * g[i] * g[j];
-				b3 = j * g[i] * g[j];
-				b4 = i * i * g[i] * g[j];
-				b5 = j * j * g[i] * g[j];
-				b6 = i * j * g[i] * g[j];
-				int base_addr = ((i+n) * POLY_EXP_SAMPLE_SIZE +(j+n))* 5;
-				coeff[base_addr] = ig11 * b2;
-				coeff[base_addr + 1] = ig11 * b3;
-				coeff[base_addr + 2] = ig33 * b4 + ig03 * b1;
-				coeff[base_addr + 3] = ig33 * b5 + ig03 * b1;
-				coeff[base_addr + 4] = ig55 * b6;
-			}
-		}
-
-	for(int i=0;i<POLY_EXP_SAMPLE_SIZE * POLY_EXP_SAMPLE_SIZE; i++){
-		out_val.r0 += coeff[i * 5 + 0] * in[i * 5 + 0];
-		out_val.r1 += coeff[i * 5 + 1] * in[i * 5 + 1];
-		out_val.r2 += coeff[i * 5 + 2] * in[i * 5 + 2];
-		out_val.r3 += coeff[i * 5 + 3] * in[i * 5 + 3];
-		out_val.r4 += coeff[i * 5 + 4] * in[i * 5 + 4];
-	}
-	return out_val;
-
-
-}
-
-
-
-
-void Poly_Exp_hls_strm(hls::stream<pix_t>& in, hls::stream<Data_5> &out, int width, int height){
+#pragma HLS DATAFLOW
 	//initialize the matrix
 	int n = (POLY_EXP_SAMPLE_SIZE - 1) / 2;
 	data_t coeff[5][POLY_EXP_SAMPLE_SIZE][POLY_EXP_SAMPLE_SIZE];
-#pragma HLS ARRAY_PARTITION variable=coeff complete dim=0
 	data_t sigma = 1.5;
 	data_t m[POLY_EXP_SAMPLE_SIZE], *g, s = 0;
+#pragma HLS ARRAY_PARTITION variable=m complete dim=1
 	g = m + n;
 
 	for (int x = -n; x <= n; x++) {
@@ -105,20 +17,9 @@ void Poly_Exp_hls_strm(hls::stream<pix_t>& in, hls::stream<Data_5> &out, int wid
 	// calculate a Gaussian distribution and normalize it, store in g[]
 	for (int x = -n; x <= n; x++)
 		g[x] = g[x] / s;
-
 	data_t a, b, c, d, X;
 	data_t ig00, ig11, ig03, ig33, ig55;
-	// delta(d) = [B_ W B]^-1 B_ W f
-	// B_ W B = G
-		a = b = c = d = 0;
-	// invG:
-	// [ x        e  e    ]
-	// [    y             ]
-	// [       y          ]
-	// [ e        z       ]
-	// [ e           z    ]
-	// [                u ]
-
+	a = b = c = d = 0;
 	//calculate mat G
 	for (int y = -n; y <= n; y++)
 		for (int x = -n; x <= n; x++)
@@ -135,76 +36,94 @@ void Poly_Exp_hls_strm(hls::stream<pix_t>& in, hls::stream<Data_5> &out, int wid
 	ig55 = 1 / d;
 	ig03 = (b*d - c*b) / X;
 
-	//calculate the coeff, which makes the poly_exp like 5 converlutional operate
-	for (int i = -n; i <= n; i++) {
-		for (int j = -n; j <= n; j++) {
-			data_t b1, b2, b3, b4, b5, b6;
-			b1 = g[i] * g[j];
-			b2 = i * g[i] * g[j];
-			b3 = j * g[i] * g[j];
-			b4 = i * i * g[i] * g[j];
-			b5 = j * j * g[i] * g[j];
-			b6 = i * j * g[i] * g[j];
-			coeff[0][i + n][j + n] = ig11 * b2;
-			coeff[1][i + n][j + n] = ig11 * b3;
-			coeff[2][i + n][j + n] = ig33 * b4 + ig03 * b1;
-			coeff[3][i + n][j + n] = ig33 * b5 + ig03 * b1;
-			coeff[4][i + n][j + n] = ig55 * b6;
+	pix_t hwin[POLY_EXP_SAMPLE_SIZE];
+	hls::stream<Data_3> hconv("hconv");
+
+	Data_3 linebuf[POLY_EXP_SAMPLE_SIZE-1][WIDTH];
+#pragma HLS ARRAY_PARTITION variable=linebuf dim=1 complete
+	hls::stream<Data_5> vconv("vconv");
+	Data_5 borderbuf[WIDTH + 1 -POLY_EXP_SAMPLE_SIZE];
+
+	HConvH:for(int i=0;i<height;i++){
+#pragma HLS LOOP_TRIPCOUNT min=240 max=480
+		HConvW:for(int j=0;j<width;j++){
+#pragma HLS PIPELINE II=2
+#pragma HLS LOOP_TRIPCOUNT min=320 max=640
+			pix_t in_val = in.read();
+			Data_3 out_val = {0,0,0};
+			HConv:for(int k=0;k<POLY_EXP_SAMPLE_SIZE;k++){
+				hwin[k] = k < (POLY_EXP_SAMPLE_SIZE - 1) ? hwin[k+1]:in_val;
+				int p = k-n;
+				out_val.r += hwin[k] * g[p];
+				out_val.xr += hwin[k] * p * g[p];
+				out_val.xxr += hwin[k] * p * p * g[p];
+			}
+			if(j >= POLY_EXP_SAMPLE_SIZE - 1)
+				hconv << out_val;
 		}
 	}
 
-	pix_t window[POLY_EXP_SAMPLE_SIZE][POLY_EXP_SAMPLE_SIZE];
-#pragma HLS ARRAY_PARTITION variable=window complete dim=0
-	pix_t buf[POLY_EXP_SAMPLE_SIZE-1][WIDTH];
-	for(int i=0;i<height;i++){
-		for(int j=0;i<width;j++){
-#pragma HLS PIPELINE
-			pix_t in_val = in.read();
-			if(i == 0){
-				for(int k=0; k<POLY_EXP_SAMPLE_SIZE-1; k++){
-					buf[k][0] = in_val;
+	VConvH:for(int i=0;i<height;i++){
+#pragma HLS LOOP_TRIPCOUNT min=240 max=480
+		VConvW:for(int j=0;j<width + 1 - POLY_EXP_SAMPLE_SIZE;j++){
+#pragma HLS DEPENDENCE variable=linebuf inter false
+#pragma HLS PIPELINE II=2
+#pragma HLS LOOP_TRIPCOUNT min=320 max=640
+			Data_3 in_val = hconv.read();
+			data_t b1, b2, b3, b4, b5, b6;
+			Data_5 out_val;
+			b1 = b2 = b3 = b4 = b5 = b6 = 0;
+			VConv:for(int k=0;k<POLY_EXP_SAMPLE_SIZE;k++){
+				Data_3 vwin_val = k < (POLY_EXP_SAMPLE_SIZE - 1) ? linebuf[k][j]:in_val;
+				int p = k-n;
+				b1 += vwin_val.r * g[p];
+				b2 += vwin_val.r * p * g[p];
+			    b3 += vwin_val.xr * g[p];
+				b4 += vwin_val.r * p * p * g[p];
+				b5 += vwin_val.xxr * g[p];
+				b6 += vwin_val.xr * p * g[p];
+			}
+			if(i >= POLY_EXP_SAMPLE_SIZE - 1){
+				out_val.r0 = ig11 * b2;
+				out_val.r1 = ig11 * b3;
+				out_val.r2 = ig33 * b4 + ig03 * b1;
+				out_val.r3 = ig33 * b5 + ig03 * b1;
+				out_val.r4 = ig55 * b6;
+				vconv.write(out_val);
+			}
+		}
+	}
+
+	const int border_width = int(POLY_EXP_SAMPLE_SIZE/2);
+	BorderH:for(int i=0; i<height; i++){
+#pragma HLS LOOP_TRIPCOUNT min=240 max=480
+		BorderW:for(int j=0; j<width; j++){
+#pragma HLS PIPELINE II=2
+#pragma HLS LOOP_TRIPCOUNT min=320 max=640
+			Data_5 d_in, l_edge, r_edge, d_out;
+			if (i == 0 || (i > border_width && i < height - border_width)) {
+				if (j < width - (POLY_EXP_SAMPLE_SIZE - 1)) {
+					d_in = vconv.read();
+			        borderbuf[j] = d_in;
+				}
+				if (j == 0) {
+					l_edge = d_in;
+				}
+				if (j == width - POLY_EXP_SAMPLE_SIZE) {
+					r_edge = d_in;
 				}
 			}
-			if(j == 0){
-				for(int ii=0;ii<POLY_EXP_SAMPLE_SIZE - 1;ii++){
-					for(int jj=0;jj<POLY_EXP_SAMPLE_SIZE;jj++){
-						window[ii][jj] = buf[ii][0];
-					}
-				}
-				for(int k=0; k<POLY_EXP_SAMPLE_SIZE; k++){
-					window[POLY_EXP_SAMPLE_SIZE - 1][k] = in_val;
-				}
+			if (j <= border_width) {
+				d_out = l_edge;
+			} else if (j >= width - border_width - 1) {
+				d_out = r_edge;
+			} else {
+				d_out = borderbuf[j - border_width];
 			}
-			else{
-				for(int ii=0;ii<POLY_EXP_SAMPLE_SIZE;ii++){
-					for(int jj=0;jj<POLY_EXP_SAMPLE_SIZE - 1;jj++){
-						window[ii][jj] = window[ii][jj+1];
-					}
-				}
-				for(int k=0; k<POLY_EXP_SAMPLE_SIZE-1; k++)
-					window[k][POLY_EXP_SAMPLE_SIZE - 1] = buf[k][j];
-				window[POLY_EXP_SAMPLE_SIZE - 1][POLY_EXP_SAMPLE_SIZE - 1] = in_val;
-			}
-			for(int k=0; k<POLY_EXP_SAMPLE_SIZE-1; k++)
-				buf[k][j] = buf[k+1][j];
-			buf[POLY_EXP_SAMPLE_SIZE-1][j] = in_val;
-			data_t r[5];
-#pragma HLS ARRAY_PARTITION variable=r complete dim=1
-			for(int k=0;k<5;k++)
-				r[k] = 0;
-			for(int ii=0;ii<POLY_EXP_SAMPLE_SIZE;ii++){
-				for(int jj=0;jj<POLY_EXP_SAMPLE_SIZE;jj++){
-					for(int k=0;k<5;k++){
-						r[k]+=window[ii][jj] * coeff[k][ii][jj];
-					}
-				}
-			}
-			Data_5 out_val = {r[0],r[1],r[2],r[3],r[4]};
-			out.write(out_val);
+			out.write(d_out);
 		}
 	}
 }
-*/
 
 void UpdataMat_2_1_hls(hls::stream<Data_5> &src_poly, Data_5 dst_poly[MAXSIZE], hls::stream<Data_2>& flow_in,
 		hls::stream<Data_5>& M, short width, short height){
@@ -307,7 +226,7 @@ void UpdateFlow_hls(hls::stream<Data_5>&M, hls::stream<Data_2>&flow_out, int wid
 		for(int j=0;j<width;j++){
 #pragma HLS LOOP_TRIPCOUNT min=320 max=640
 #pragma HLS PIPELINE
-			Data_2 out = {0, 0};
+			Data_2 out;
 			if((unsigned)(i - K/2) < height-K+1 && (unsigned)(j - K/2) < width-K+1){
 				Data_5 m_in = vconv.read()/(K*K);
 				data_t g00, g01, g11, h0, h1;

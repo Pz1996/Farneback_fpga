@@ -3,6 +3,10 @@
 #include "hls_stream.h"
 #include <math.h>
 
+struct Data_3{
+	data_t r, xr, xxr;
+};
+
 struct Data_5{
 	data_t r0, r1, r2, r3, r4;
 	Data_5 operator+(const Data_5& in){
