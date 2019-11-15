@@ -143,11 +143,51 @@ void Poly_Exp(pix_t in[MAXSIZE], data_t out[MAXSIZE][5], int width, int height)
 
 void Displacement_Est(data_t src_poly[MAXSIZE][5], data_t dst_poly[MAXSIZE][5], data_t flow_in[MAXSIZE][2], data_t flow_out[MAXSIZE][2], int width, int height, int scale)
 {
-	/*
-	data_t M[MAXSIZE][5], flow_t[MAXSIZE][2];
-	UpdateMat(src_poly, dst_poly, flow_in, M, width, height, scale);
-	UpdateFlow(M, flow_out, width, height);
+	
+	data_t **_src_poly, **_dst_poly, **_flow_in, **_M, **_flow_out;
+	_src_poly = new data_t*[MAXSIZE];
+	_dst_poly = new data_t*[MAXSIZE];
+	_flow_in = new data_t*[MAXSIZE];
+	_M = new data_t*[MAXSIZE];
+	_flow_out = new data_t*[MAXSIZE];
+	for (int i = 0; i < MAXSIZE; i++) {
+		_src_poly[i] = new data_t[5];
+		for (int k = 0; k < 5; k++)
+			_src_poly[i][k] = src_poly[i][k];
+		_dst_poly[i] = new data_t[5];
+		for (int k = 0; k < 5; k++)
+			_dst_poly[i][k] = dst_poly[i][k];
+		_flow_in[i] = new data_t[2];
+		for (int k = 0; k < 2; k++)
+			_flow_in[i][k] = flow_in[i][k];
+		_M[i] = new data_t[5];
+		_flow_out[i] = new data_t[2];
+	}
+	
+	
+	UpdateMat(_src_poly, _dst_poly, _flow_in, _M, width, height, scale);
+	UpdateFlow(_M, _flow_out, width, height);
+	
+	for (int i = 0; i < MAXSIZE; i++) {
+		flow_out[i][0] = _flow_out[i][0];
+		flow_out[i][1] = _flow_out[i][1];
+	}
 
+	for (int i = 0; i < MAXSIZE; i++) {
+		delete[]_src_poly[i];
+		delete[]_dst_poly[i];
+		delete[]_flow_in[i];
+		delete[]_M[i];
+		delete[]_flow_out[i];
+	}
+	
+	delete[]_src_poly;
+	delete[]_dst_poly;
+	delete[]_flow_in;
+	delete[]_M;
+	delete[]_flow_out;
+
+	/*
 	SmoothFlow(flow_t, flow_in, width, height);
 	UpdateMat(src_poly, dst_poly, flow_in, M, width, height, 1);
 	UpdateFlow(M, flow_t, width, height);

@@ -81,7 +81,7 @@ int main() {
 	Displacement_Est(pre_poly, aft_poly, flow_in, flow_out, WIDTH, HEIGHT, 2);
 	
 	Mat flow;
-	calcOpticalFlowFarneback(pre, aft, flow, 0.707, 5, 11, 3, 7, 1.5, 0);
+	calcOpticalFlowFarneback(pre, aft, flow, 0.5, 2, 11, 3, 7, 1.5, 0);
 
 
 	Mat k = aft_rgb - pre_rgb;

@@ -9,5 +9,4 @@
 /.project
 /.settings
 vivado_hls.app
-main.cpp
 ref.*
