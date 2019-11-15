@@ -82,6 +82,9 @@ void Poly_Exp_hls_strm(hls::stream<pix_t>& in, hls::stream<Data_5> &out, int wid
 				b4 += vwin_val.r * p * p * g[p];
 				b5 += vwin_val.xxr * g[p];
 				b6 += vwin_val.xr * p * g[p];
+				if(k > 0)
+					linebuf[k-1][j] = vwin_val;
+
 			}
 			if(i >= POLY_EXP_SAMPLE_SIZE - 1){
 				out_val.r0 = ig11 * b2;
@@ -129,7 +132,10 @@ void UpdataMat_2_1_hls(hls::stream<Data_5> &src_poly, Data_5 dst_poly[MAXSIZE], 
 		hls::stream<Data_5>& M, short width, short height){
 	Data_2 flow_buf[WIDTH], data2_tmp;
 	UpdataMat_2_1_hls_label2:for(int i=0;i<height;i++){
+#pragma HLS LOOP_TRIPCOUNT min=240 max=480
 		UpdataMat_2_1_hls_label1:for(int j=0;j<width;j++){
+#pragma HLS LOOP_TRIPCOUNT min=320 max=640
+#pragma HLS PIPELINE
 			int fx, fy, dx, dy;
 			data_t dx_f, dy_f;
 			if(i%2 == 0 && j%2 ==0){
@@ -172,7 +178,35 @@ void UpdataMat_2_1_hls(hls::stream<Data_5> &src_poly, Data_5 dst_poly[MAXSIZE], 
 
 }
 
+void UpdateMat_0_hls(hls::stream<Data_5> &src_poly, hls::stream<Data_5> &dst_poly, hls::stream<Data_5>& M,
+		short width, short height){
+	UpdataMat_0H:for(int i=0;i<height;i++){
+#pragma HLS LOOP_TRIPCOUNT min=240 max=480
+		UpdataMat_0W:for(int j=0;j<width;j++){
+#pragma HLS LOOP_TRIPCOUNT min=320 max=640
+#pragma HLS PIPELINE
+			Data_5 src, dst, m;
+			data_t a00, a01, a11, b0, b1;
+			src = src_poly.read();
+			dst = dst_poly.read();
+			a00 = (src.r2 + dst.r2) / 2; //r4
+			a01 = (src.r4 + dst.r4) / 4; //r6
+			a11 = (src.r3 + dst.r3) / 2; //r5
+			b0 = (src.r0 - dst.r0) / 2; //r2
+			b1 = (src.r1 - dst.r1) / 2; //r3
+
+			m.r0 = a00*a00 + a01*a01; // G(0, 0)
+			m.r1 = a01*(a00 + a11); // G(0, 1)
+			m.r2 = a11*a11 + a01*a01; // G(1, 1)
+			m.r3 = a00*b0 + a01*b1; // H(0)
+			m.r4 = a01*b0 + a11*b1; // H(1)
+			M.write(m);
+		}
+	}
+}
+
 void UpdateFlow_hls(hls::stream<Data_5>&M, hls::stream<Data_2>&flow_out, int width, int height){
+#pragma HLS DATAFLOW
 	const int K = DE_SAMPLE_SIZE;
 	// Horizontal pixel window
 	Data_5 hwin[DE_SAMPLE_SIZE];

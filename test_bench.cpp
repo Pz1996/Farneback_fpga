@@ -123,6 +123,55 @@ int test_flow(){
 	return (err_cnt == 0)? 0 : -1;
 }
 
+int test_poly(){
+	pix_t *in;
+	data_t **out;
+	in = new pix_t[MAXSIZE];
+	out = new data_t*[MAXSIZE];
+	for(int i=0;i<MAXSIZE;i++)
+		out[i] = new data_t[5];
+	hls::stream<pix_t> in_hls("in_hls");
+	hls::stream<Data_5> out_hls("out_hls");
+
+	for(int i=0;i<MAXSIZE;i++){
+		in[i] = i % 234;
+		in_hls.write(i % 234);
+	}
+
+	Poly_Exp(in, out, WIDTH, HEIGHT);
+	Poly_Exp_hls_strm(in_hls, out_hls, WIDTH, HEIGHT);
+
+	//check
+	int err_cnt = 0;
+	for(int i=0;i<MAXSIZE;i++){
+		Data_5 d5;
+		d5 = out_hls.read();
+		data_t sq_sum = 0;
+		sq_sum += (out[i][0] - d5.r0)*(out[i][0] - d5.r0);
+		sq_sum += (out[i][1] - d5.r1)*(out[i][1] - d5.r1);
+		sq_sum += (out[i][2] - d5.r2)*(out[i][2] - d5.r2);
+		sq_sum += (out[i][3] - d5.r3)*(out[i][3] - d5.r3);
+		sq_sum += (out[i][4] - d5.r4)*(out[i][4] - d5.r4);
+
+		if(sq_sum >= 1){
+			cout << out[i][0] << "\t"<< out[i][1] << "\t"<< out[i][2] << "\t"<< out[i][3] << "\t"<< out[i][4] << endl;
+			cout << d5.r0 << "\t"<< d5.r1 << "\t"<<d5.r2 << "\t"<<d5.r3<< "\t"<< d5.r4 << endl << endl;
+			err_cnt++;
+		}
+	}
+	if(err_cnt == 0)
+		cout << "*** TEST PASSED! ***" << endl;
+	else
+		cout << err_cnt << " errors are detected!\n"<< "*** TEST FAILED! ***" << endl;
+	return (err_cnt == 0)? 0 : -1;
+
+
+	for(int i=0;i<MAXSIZE;i++)
+		delete[]out[i];
+	delete[] in;
+	delete[] out;
+}
+
 int main(){
-	return test_flow();
+	return test_poly();
 }
