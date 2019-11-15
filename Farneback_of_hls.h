@@ -1,6 +1,7 @@
 #pragma once
 #include "define.h"
 #include "hls_stream.h"
+#include <math.h>
 
 struct Data_5{
 	data_t r0, r1, r2, r3, r4;

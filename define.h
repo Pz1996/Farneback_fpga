@@ -1,6 +1,6 @@
 #pragma once
-#define WIDTH 64
-#define HEIGHT 48
+#define WIDTH 640
+#define HEIGHT 480
 
 #define POLY_EXP_SAMPLE_SIZE 15
 #define DE_SAMPLE_SIZE 11

@@ -1,5 +1,211 @@
 #include "Farneback_of_hls.h"
 
+void Poly_Exp_hls_strm(hls::stream<pix_t>& in, hls::stream<Data_5> &out, int width, int height){
+
+}
+
+/*
+Data_5 Cal_poly_kernel(data_t in[POLY_EXP_SAMPLE_SIZE * POLY_EXP_SAMPLE_SIZE * 5]){
+#pragma HLS ARRAY_PARTITION variable=in complete dim=1
+#pragma HLS ARRAY_RESHAPE variable=in cyclic factor=5 dim=1
+#pragma HLS PIPELINE
+	Data_5 out_val = {0,0,0,0,0};
+	int n = (POLY_EXP_SAMPLE_SIZE - 1) / 2;
+	data_t coeff[POLY_EXP_SAMPLE_SIZE * POLY_EXP_SAMPLE_SIZE * 5];
+#pragma HLS ARRAY_PARTITION variable=coeff complete dim=1
+#pragma HLS ARRAY_RESHAPE variable=coeff cyclic factor=5 dim=1
+		data_t sigma = 1.5;
+		data_t m[POLY_EXP_SAMPLE_SIZE], *g, s = 0;
+		g = m + n;
+
+		for (int x = -n; x <= n; x++) {
+			g[x] = exp(-x*x / (2 * sigma*sigma));
+			s += g[x];
+		}
+		// calculate a Gaussian distribution and normalize it, store in g[]
+		for (int x = -n; x <= n; x++)
+			g[x] = g[x] / s;
+
+		data_t a, b, c, d, X;
+		data_t ig00, ig11, ig03, ig33, ig55;
+		// delta(d) = [B_ W B]^-1 B_ W f
+		// B_ W B = G
+			a = b = c = d = 0;
+		// invG:
+		// [ x        e  e    ]
+		// [    y             ]
+		// [       y          ]
+		// [ e        z       ]
+		// [ e           z    ]
+		// [                u ]
+
+		//calculate mat G
+		for (int y = -n; y <= n; y++)
+			for (int x = -n; x <= n; x++)
+			{
+				a += g[y] * g[x];
+				b += g[y] * g[x] * x*x;
+				c += g[y] * g[x] * x*x*x*x;
+				d += g[y] * g[x] * x*x*y*y;
+			}
+		// calculate mat G_inv, according to the special structure
+		X = a*c*c + b*b*d * 2 - a*d*d - b*b*c * 2;
+		ig11 = 1 / b;
+		ig33 = (a*c - b*b) / X;
+		ig55 = 1 / d;
+		ig03 = (b*d - c*b) / X;
+
+		//calculate the coeff, which makes the poly_exp like 5 converlutional operate
+		for (int i = -n; i <= n; i++) {
+			for (int j = -n; j <= n; j++) {
+				data_t b1, b2, b3, b4, b5, b6;
+				b1 = g[i] * g[j];
+				b2 = i * g[i] * g[j];
+				b3 = j * g[i] * g[j];
+				b4 = i * i * g[i] * g[j];
+				b5 = j * j * g[i] * g[j];
+				b6 = i * j * g[i] * g[j];
+				int base_addr = ((i+n) * POLY_EXP_SAMPLE_SIZE +(j+n))* 5;
+				coeff[base_addr] = ig11 * b2;
+				coeff[base_addr + 1] = ig11 * b3;
+				coeff[base_addr + 2] = ig33 * b4 + ig03 * b1;
+				coeff[base_addr + 3] = ig33 * b5 + ig03 * b1;
+				coeff[base_addr + 4] = ig55 * b6;
+			}
+		}
+
+	for(int i=0;i<POLY_EXP_SAMPLE_SIZE * POLY_EXP_SAMPLE_SIZE; i++){
+		out_val.r0 += coeff[i * 5 + 0] * in[i * 5 + 0];
+		out_val.r1 += coeff[i * 5 + 1] * in[i * 5 + 1];
+		out_val.r2 += coeff[i * 5 + 2] * in[i * 5 + 2];
+		out_val.r3 += coeff[i * 5 + 3] * in[i * 5 + 3];
+		out_val.r4 += coeff[i * 5 + 4] * in[i * 5 + 4];
+	}
+	return out_val;
+
+
+}
+
+
+
+
+void Poly_Exp_hls_strm(hls::stream<pix_t>& in, hls::stream<Data_5> &out, int width, int height){
+	//initialize the matrix
+	int n = (POLY_EXP_SAMPLE_SIZE - 1) / 2;
+	data_t coeff[5][POLY_EXP_SAMPLE_SIZE][POLY_EXP_SAMPLE_SIZE];
+#pragma HLS ARRAY_PARTITION variable=coeff complete dim=0
+	data_t sigma = 1.5;
+	data_t m[POLY_EXP_SAMPLE_SIZE], *g, s = 0;
+	g = m + n;
+
+	for (int x = -n; x <= n; x++) {
+		g[x] = exp(-x*x / (2 * sigma*sigma));
+		s += g[x];
+	}
+	// calculate a Gaussian distribution and normalize it, store in g[]
+	for (int x = -n; x <= n; x++)
+		g[x] = g[x] / s;
+
+	data_t a, b, c, d, X;
+	data_t ig00, ig11, ig03, ig33, ig55;
+	// delta(d) = [B_ W B]^-1 B_ W f
+	// B_ W B = G
+		a = b = c = d = 0;
+	// invG:
+	// [ x        e  e    ]
+	// [    y             ]
+	// [       y          ]
+	// [ e        z       ]
+	// [ e           z    ]
+	// [                u ]
+
+	//calculate mat G
+	for (int y = -n; y <= n; y++)
+		for (int x = -n; x <= n; x++)
+		{
+			a += g[y] * g[x];
+			b += g[y] * g[x] * x*x;
+			c += g[y] * g[x] * x*x*x*x;
+			d += g[y] * g[x] * x*x*y*y;
+		}
+	// calculate mat G_inv, according to the special structure
+	X = a*c*c + b*b*d * 2 - a*d*d - b*b*c * 2;
+	ig11 = 1 / b;
+	ig33 = (a*c - b*b) / X;
+	ig55 = 1 / d;
+	ig03 = (b*d - c*b) / X;
+
+	//calculate the coeff, which makes the poly_exp like 5 converlutional operate
+	for (int i = -n; i <= n; i++) {
+		for (int j = -n; j <= n; j++) {
+			data_t b1, b2, b3, b4, b5, b6;
+			b1 = g[i] * g[j];
+			b2 = i * g[i] * g[j];
+			b3 = j * g[i] * g[j];
+			b4 = i * i * g[i] * g[j];
+			b5 = j * j * g[i] * g[j];
+			b6 = i * j * g[i] * g[j];
+			coeff[0][i + n][j + n] = ig11 * b2;
+			coeff[1][i + n][j + n] = ig11 * b3;
+			coeff[2][i + n][j + n] = ig33 * b4 + ig03 * b1;
+			coeff[3][i + n][j + n] = ig33 * b5 + ig03 * b1;
+			coeff[4][i + n][j + n] = ig55 * b6;
+		}
+	}
+
+	pix_t window[POLY_EXP_SAMPLE_SIZE][POLY_EXP_SAMPLE_SIZE];
+#pragma HLS ARRAY_PARTITION variable=window complete dim=0
+	pix_t buf[POLY_EXP_SAMPLE_SIZE-1][WIDTH];
+	for(int i=0;i<height;i++){
+		for(int j=0;i<width;j++){
+#pragma HLS PIPELINE
+			pix_t in_val = in.read();
+			if(i == 0){
+				for(int k=0; k<POLY_EXP_SAMPLE_SIZE-1; k++){
+					buf[k][0] = in_val;
+				}
+			}
+			if(j == 0){
+				for(int ii=0;ii<POLY_EXP_SAMPLE_SIZE - 1;ii++){
+					for(int jj=0;jj<POLY_EXP_SAMPLE_SIZE;jj++){
+						window[ii][jj] = buf[ii][0];
+					}
+				}
+				for(int k=0; k<POLY_EXP_SAMPLE_SIZE; k++){
+					window[POLY_EXP_SAMPLE_SIZE - 1][k] = in_val;
+				}
+			}
+			else{
+				for(int ii=0;ii<POLY_EXP_SAMPLE_SIZE;ii++){
+					for(int jj=0;jj<POLY_EXP_SAMPLE_SIZE - 1;jj++){
+						window[ii][jj] = window[ii][jj+1];
+					}
+				}
+				for(int k=0; k<POLY_EXP_SAMPLE_SIZE-1; k++)
+					window[k][POLY_EXP_SAMPLE_SIZE - 1] = buf[k][j];
+				window[POLY_EXP_SAMPLE_SIZE - 1][POLY_EXP_SAMPLE_SIZE - 1] = in_val;
+			}
+			for(int k=0; k<POLY_EXP_SAMPLE_SIZE-1; k++)
+				buf[k][j] = buf[k+1][j];
+			buf[POLY_EXP_SAMPLE_SIZE-1][j] = in_val;
+			data_t r[5];
+#pragma HLS ARRAY_PARTITION variable=r complete dim=1
+			for(int k=0;k<5;k++)
+				r[k] = 0;
+			for(int ii=0;ii<POLY_EXP_SAMPLE_SIZE;ii++){
+				for(int jj=0;jj<POLY_EXP_SAMPLE_SIZE;jj++){
+					for(int k=0;k<5;k++){
+						r[k]+=window[ii][jj] * coeff[k][ii][jj];
+					}
+				}
+			}
+			Data_5 out_val = {r[0],r[1],r[2],r[3],r[4]};
+			out.write(out_val);
+		}
+	}
+}
+*/
+
 void UpdataMat_2_1_hls(hls::stream<Data_5> &src_poly, Data_5 dst_poly[MAXSIZE], hls::stream<Data_2>& flow_in,
 		hls::stream<Data_5>& M, short width, short height){
 	Data_2 flow_buf[WIDTH], data2_tmp;
