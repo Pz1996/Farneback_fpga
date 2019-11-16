@@ -47,7 +47,7 @@ void Poly_Exp_hls_strm(hls::stream<pix_t>& in, hls::stream<Data_5> &out, int wid
 	HConvH:for(int i=0;i<height;i++){
 #pragma HLS LOOP_TRIPCOUNT min=240 max=480
 		HConvW:for(int j=0;j<width;j++){
-#pragma HLS PIPELINE II=2
+#pragma HLS PIPELINE II=3
 #pragma HLS LOOP_TRIPCOUNT min=320 max=640
 			pix_t in_val = in.read();
 			Data_3 out_val = {0,0,0};
@@ -67,7 +67,7 @@ void Poly_Exp_hls_strm(hls::stream<pix_t>& in, hls::stream<Data_5> &out, int wid
 #pragma HLS LOOP_TRIPCOUNT min=240 max=480
 		VConvW:for(int j=0;j<width + 1 - POLY_EXP_SAMPLE_SIZE;j++){
 #pragma HLS DEPENDENCE variable=linebuf inter false
-#pragma HLS PIPELINE II=2
+#pragma HLS PIPELINE II=3
 #pragma HLS LOOP_TRIPCOUNT min=320 max=640
 			Data_3 in_val = hconv.read();
 			data_t b1, b2, b3, b4, b5, b6;
@@ -101,7 +101,7 @@ void Poly_Exp_hls_strm(hls::stream<pix_t>& in, hls::stream<Data_5> &out, int wid
 	BorderH:for(int i=0; i<height; i++){
 #pragma HLS LOOP_TRIPCOUNT min=240 max=480
 		BorderW:for(int j=0; j<width; j++){
-#pragma HLS PIPELINE II=2
+#pragma HLS PIPELINE II=3
 #pragma HLS LOOP_TRIPCOUNT min=320 max=640
 			Data_5 d_in, l_edge, r_edge, d_out;
 			if (i == 0 || (i > border_width && i < height - border_width)) {
@@ -184,7 +184,7 @@ void UpdateMat_0_hls(hls::stream<Data_5> &src_poly, hls::stream<Data_5> &dst_pol
 #pragma HLS LOOP_TRIPCOUNT min=240 max=480
 		UpdataMat_0W:for(int j=0;j<width;j++){
 #pragma HLS LOOP_TRIPCOUNT min=320 max=640
-#pragma HLS PIPELINE
+#pragma HLS PIPELINE II=3
 			Data_5 src, dst, m;
 			data_t a00, a01, a11, b0, b1;
 			src = src_poly.read();
@@ -222,7 +222,7 @@ void UpdateFlow_hls(hls::stream<Data_5>&M, hls::stream<Data_2>&flow_out, int wid
 #pragma HLS LOOP_TRIPCOUNT min=240 max=480
 		HconvW:for(int j=0;j<width;j++){
 #pragma HLS LOOP_TRIPCOUNT min=320 max=640
-#pragma HLS PIPELINE
+#pragma HLS PIPELINE II=3
 			Data_5 in_val = M.read();
 			Data_5 out_val = {0,0,0,0,0};
 			Hconv:for(int k=0; k<K; k++){
@@ -240,7 +240,7 @@ void UpdateFlow_hls(hls::stream<Data_5>&M, hls::stream<Data_2>&flow_out, int wid
 		VconvW:for(int j=0;j<vconv_xlim;j++){
 #pragma HLS LOOP_TRIPCOUNT min=320 max=640
 #pragma HLS DEPENDENCE variable=linebuf inter false
-#pragma HLS PIPELINE
+#pragma HLS PIPELINE II=3
 			Data_5 in_val = hconv.read();
 			Data_5 out_val = {0,0,0,0,0};
 			Vconv:for(int k=0; k<K; k++){
@@ -259,7 +259,7 @@ void UpdateFlow_hls(hls::stream<Data_5>&M, hls::stream<Data_2>&flow_out, int wid
 #pragma HLS LOOP_TRIPCOUNT min=240 max=480
 		for(int j=0;j<width;j++){
 #pragma HLS LOOP_TRIPCOUNT min=320 max=640
-#pragma HLS PIPELINE
+#pragma HLS PIPELINE II=3
 			Data_2 out;
 			if((unsigned)(i - K/2) < height-K+1 && (unsigned)(j - K/2) < width-K+1){
 				Data_5 m_in = vconv.read()/(K*K);
@@ -277,5 +277,53 @@ void UpdateFlow_hls(hls::stream<Data_5>&M, hls::stream<Data_2>&flow_out, int wid
 			}
 			flow_out.write(out);
 		}
+	}
+}
+
+void Farneback_top(volatile pix_t* mig_in, volatile data_t* mig_out){
+#pragma HLS INTERFACE s_axilite port=return
+#pragma HLS INTERFACE ap_ctrl_hs port=return
+#pragma HLS INTERFACE m_axi depth=640000 port=mig_in
+#pragma HLS INTERFACE m_axi depth=640000 port=mig_out
+#pragma DATAFLOW
+	hls::stream<pix_t> src_img_strm("src_img_strm");
+#pragma HLS STREAM variable=src_img_strm depth=1440 dim=1
+#pragma HLS DATA_PACK variable=src_img_strm
+	hls::stream<pix_t> dst_img_strm("dst_img_strm");
+#pragma HLS STREAM variable=dst_img_strm depth=1440 dim=1
+#pragma HLS DATA_PACK variable=dst_img_strm
+	hls::stream<Data_5> src_poly("src_poly");
+#pragma HLS STREAM variable=src_poly depth=1440 dim=1
+#pragma HLS DATA_PACK variable=src_poly
+	hls::stream<Data_5> dst_poly("dst_poly");
+#pragma HLS STREAM variable=dst_poly depth=1440 dim=1
+#pragma HLS DATA_PACK variable=dst_poly
+	hls::stream<Data_5> M("M");
+#pragma HLS STREAM variable=M depth=1440 dim=1
+#pragma HLS DATA_PACK variable=M
+	hls::stream<Data_2> flow("flow");
+#pragma HLS STREAM variable=flow depth=1440 dim=1
+#pragma HLS DATA_PACK variable=flow
+
+	for(int i=0;i<MAXSIZE;i++){
+#pragma HLS PIPELINE
+		pix_t tmp = mig_in[i];
+		src_img_strm << tmp;
+	}
+	for(int i=0;i<MAXSIZE;i++){
+#pragma HLS PIPELINE
+		pix_t tmp = mig_in[i + MAXSIZE];
+		dst_img_strm << tmp;
+	}
+	Poly_Exp_hls_strm(src_img_strm,src_poly,WIDTH,HEIGHT);
+	Poly_Exp_hls_strm(dst_img_strm,dst_poly,WIDTH,HEIGHT);
+	UpdateMat_0_hls(src_poly, dst_poly, M, WIDTH,HEIGHT);
+	UpdateFlow_hls(M, flow, WIDTH, HEIGHT);
+
+	for(int i=0; i<MAXSIZE; i++){
+#pragma HLS PIPELINE
+		Data_2 tmp = flow.read();
+		mig_out[i*2] = tmp.r0;
+		mig_out[i*2+1] = tmp.r1;
 	}
 }
