@@ -260,7 +260,7 @@ void UpdateFlow_hls(hls::stream<Data_5>&M, hls::stream<Data_2>&flow_out, int wid
 		for(int j=0;j<width;j++){
 #pragma HLS LOOP_TRIPCOUNT min=320 max=640
 #pragma HLS PIPELINE II=3
-			Data_2 out;
+			Data_2 out = {0,0};
 			if((unsigned)(i - K/2) < height-K+1 && (unsigned)(j - K/2) < width-K+1){
 				Data_5 m_in = vconv.read()/(K*K);
 				data_t g00, g01, g11, h0, h1;
@@ -283,32 +283,32 @@ void UpdateFlow_hls(hls::stream<Data_5>&M, hls::stream<Data_2>&flow_out, int wid
 void Farneback_top(volatile pix_t* mig_in, volatile data_t* mig_out){
 #pragma HLS INTERFACE s_axilite port=return
 #pragma HLS INTERFACE ap_ctrl_hs port=return
-#pragma HLS INTERFACE m_axi depth=640000 port=mig_in
-#pragma HLS INTERFACE m_axi depth=3200000 port=mig_out
+#pragma HLS INTERFACE m_axi depth=6400 port=mig_in
+#pragma HLS INTERFACE m_axi depth=32000 port=mig_out
 #pragma DATAFLOW
 	hls::stream<pix_t> src_img_strm("src_img_strm");
-#pragma HLS STREAM variable=src_img_strm depth=1440 dim=1
+#pragma HLS STREAM variable=src_img_strm depth=4 dim=1
 #pragma HLS DATA_PACK variable=src_img_strm
 	hls::stream<pix_t> dst_img_strm("dst_img_strm");
-#pragma HLS STREAM variable=dst_img_strm depth=1440 dim=1
+#pragma HLS STREAM variable=dst_img_strm depth=4 dim=1
 #pragma HLS DATA_PACK variable=dst_img_strm
 	hls::stream<Data_5> src_poly("src_poly");
-#pragma HLS STREAM variable=src_poly depth=1440 dim=1
+#pragma HLS STREAM variable=src_poly depth=4 dim=1
 #pragma HLS DATA_PACK variable=src_poly
 	hls::stream<Data_5> dst_poly("dst_poly");
-#pragma HLS STREAM variable=dst_poly depth=1440 dim=1
+#pragma HLS STREAM variable=dst_poly depth=4 dim=1
 #pragma HLS DATA_PACK variable=dst_poly
 	hls::stream<Data_5> M("M");
-#pragma HLS STREAM variable=M depth=1440 dim=1
+#pragma HLS STREAM variable=M depth=4 dim=1
 #pragma HLS DATA_PACK variable=M
 	hls::stream<Data_2> flow("flow");
-#pragma HLS STREAM variable=flow depth=1440 dim=1
+#pragma HLS STREAM variable=flow depth=4 dim=1
 #pragma HLS DATA_PACK variable=flow
 
 	for(int i=0;i<MAXSIZE;i++){
 #pragma HLS PIPELINE II=2
-		pix_t tmp = mig_in[i];
-		pix_t tmp2 = mig_in[i+MAXSIZE];
+		pix_t tmp = mig_in[i*2];
+		pix_t tmp2 = mig_in[i*2+1];
 		src_img_strm << tmp;
 		dst_img_strm << tmp2;
 	}
@@ -319,7 +319,7 @@ void Farneback_top(volatile pix_t* mig_in, volatile data_t* mig_out){
 	UpdateFlow_hls(M, flow, WIDTH, HEIGHT);
 
 	for(int i=0; i<MAXSIZE; i++){
-#pragma HLS PIPELINE
+#pragma HLS PIPELINE II=2
 		Data_2 tmp = flow.read();
 		mig_out[i*2] = tmp.r0;
 		mig_out[i*2+1] = tmp.r1;

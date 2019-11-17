@@ -56,3 +56,5 @@ void UpdateMat_0_hls(hls::stream<Data_5> &src_poly, hls::stream<Data_5> &dst_pol
 		short width, short height);
 
 void UpdateFlow_hls(hls::stream<Data_5>&M, hls::stream<Data_2>&flow_out, int width, int height);
+
+void Farneback_top(volatile pix_t* mig_in, volatile data_t* mig_out);
