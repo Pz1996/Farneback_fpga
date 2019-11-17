@@ -284,7 +284,7 @@ void Farneback_top(volatile pix_t* mig_in, volatile data_t* mig_out){
 #pragma HLS INTERFACE s_axilite port=return
 #pragma HLS INTERFACE ap_ctrl_hs port=return
 #pragma HLS INTERFACE m_axi depth=640000 port=mig_in
-#pragma HLS INTERFACE m_axi depth=640000 port=mig_out
+#pragma HLS INTERFACE m_axi depth=3200000 port=mig_out
 #pragma DATAFLOW
 	hls::stream<pix_t> src_img_strm("src_img_strm");
 #pragma HLS STREAM variable=src_img_strm depth=1440 dim=1
@@ -306,15 +306,13 @@ void Farneback_top(volatile pix_t* mig_in, volatile data_t* mig_out){
 #pragma HLS DATA_PACK variable=flow
 
 	for(int i=0;i<MAXSIZE;i++){
-#pragma HLS PIPELINE
+#pragma HLS PIPELINE II=2
 		pix_t tmp = mig_in[i];
+		pix_t tmp2 = mig_in[i+MAXSIZE];
 		src_img_strm << tmp;
+		dst_img_strm << tmp2;
 	}
-	for(int i=0;i<MAXSIZE;i++){
-#pragma HLS PIPELINE
-		pix_t tmp = mig_in[i + MAXSIZE];
-		dst_img_strm << tmp;
-	}
+
 	Poly_Exp_hls_strm(src_img_strm,src_poly,WIDTH,HEIGHT);
 	Poly_Exp_hls_strm(dst_img_strm,dst_poly,WIDTH,HEIGHT);
 	UpdateMat_0_hls(src_poly, dst_poly, M, WIDTH,HEIGHT);
