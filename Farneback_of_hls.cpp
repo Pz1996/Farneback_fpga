@@ -285,7 +285,7 @@ void Farneback_top(volatile pix_t* mig_in, volatile data_t* mig_out){
 #pragma HLS INTERFACE ap_ctrl_hs port=return
 #pragma HLS INTERFACE m_axi depth=640000 port=mig_in
 #pragma HLS INTERFACE m_axi depth=3200000 port=mig_out
-#pragma DATAFLOW
+#pragma HLS DATAFLOW
 	hls::stream<pix_t> src_img_strm("src_img_strm");
 #pragma HLS STREAM variable=src_img_strm depth=1440 dim=1
 #pragma HLS DATA_PACK variable=src_img_strm
