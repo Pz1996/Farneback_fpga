@@ -283,26 +283,26 @@ void UpdateFlow_hls(hls::stream<Data_5>&M, hls::stream<Data_2>&flow_out, int wid
 void Farneback_top(volatile pix_t* mig_in, volatile data_t* mig_out){
 #pragma HLS INTERFACE s_axilite port=return
 #pragma HLS INTERFACE ap_ctrl_hs port=return
-#pragma HLS INTERFACE m_axi depth=6400 port=mig_in
-#pragma HLS INTERFACE m_axi depth=32000 port=mig_out
+#pragma HLS INTERFACE m_axi depth=640000 port=mig_in
+#pragma HLS INTERFACE m_axi depth=3200000 port=mig_out
 #pragma DATAFLOW
 	hls::stream<pix_t> src_img_strm("src_img_strm");
-#pragma HLS STREAM variable=src_img_strm depth=4 dim=1
+#pragma HLS STREAM variable=src_img_strm depth=1440 dim=1
 #pragma HLS DATA_PACK variable=src_img_strm
 	hls::stream<pix_t> dst_img_strm("dst_img_strm");
-#pragma HLS STREAM variable=dst_img_strm depth=4 dim=1
+#pragma HLS STREAM variable=dst_img_strm depth=1440 dim=1
 #pragma HLS DATA_PACK variable=dst_img_strm
 	hls::stream<Data_5> src_poly("src_poly");
-#pragma HLS STREAM variable=src_poly depth=4 dim=1
+#pragma HLS STREAM variable=src_poly depth=1440 dim=1
 #pragma HLS DATA_PACK variable=src_poly
 	hls::stream<Data_5> dst_poly("dst_poly");
-#pragma HLS STREAM variable=dst_poly depth=4 dim=1
+#pragma HLS STREAM variable=dst_poly depth=1440 dim=1
 #pragma HLS DATA_PACK variable=dst_poly
 	hls::stream<Data_5> M("M");
-#pragma HLS STREAM variable=M depth=4 dim=1
+#pragma HLS STREAM variable=M depth=1440 dim=1
 #pragma HLS DATA_PACK variable=M
 	hls::stream<Data_2> flow("flow");
-#pragma HLS STREAM variable=flow depth=4 dim=1
+#pragma HLS STREAM variable=flow depth=1440 dim=1
 #pragma HLS DATA_PACK variable=flow
 
 	for(int i=0;i<MAXSIZE;i++){
