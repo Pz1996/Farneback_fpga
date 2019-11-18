@@ -1,4 +1,4 @@
- #include "Farneback_of.h"
+#include "Farneback_of.h"
 #include "Farneback_of_hls.h"
 #include <stdio.h>
 #include <iostream>
@@ -123,6 +123,71 @@ int test_flow(){
 	return (err_cnt == 0)? 0 : -1;
 }
 
+int test_top(){
+	pix_t* hls_in;
+	pix_t* in;
+	data_t* hls_out;
+	in = new pix_t[MAXSIZE * 2];
+	hls_in = new pix_t[MAXSIZE * 2];
+	hls_out = new data_t[MAXSIZE * 2];
+	data_t **src_poly, **dst_poly, **M, **flow;
+	src_poly = new data_t*[MAXSIZE];
+	dst_poly = new data_t*[MAXSIZE];
+	M = new data_t*[MAXSIZE];
+	flow = new data_t*[MAXSIZE];
+	for(int i=0;i<MAXSIZE;i++){
+		src_poly[i] = new data_t[5];
+		dst_poly[i] = new data_t[5];
+		M[i] = new data_t[5];
+		flow[i] = new data_t[2];
+	}
+
+	//source code
+	for(int i=0;i<MAXSIZE;i++){
+		hls_in[i*2] = in[i] = (i*i) % 179;
+		hls_in[i*2+1] = in[i + MAXSIZE] = (i*i) %123;
+	}
+
+	//dut
+	Farneback_top(hls_in, hls_out);
+
+	//ref model
+	Poly_Exp(in, src_poly, WIDTH, HEIGHT);
+	Poly_Exp(in+MAXSIZE, dst_poly, WIDTH, HEIGHT);
+	UpdateMat(src_poly, dst_poly, NULL, M, WIDTH, HEIGHT, 0);
+	UpdateFlow(M, flow, WIDTH, HEIGHT);
+
+	//check
+	int err_cnt = 0;
+	for(int i=0;i<MAXSIZE;i++){
+		data_t score = (flow[i][0] - hls_out[i*2]) * (flow[i][0] - hls_out[i*2]) +
+				(flow[i][1] - hls_out[i*2+1]) * (flow[i][1] - hls_out[i*2+1]);
+		if(score > 1){
+			err_cnt++;
+			printf("[%d,%d]: (%f,%f)(%f,%f)\n",i/WIDTH, i%WIDTH, flow[i][0], flow[i][1], hls_out[i*2], hls_out[i*2+1]);
+		}
+	}
+	if(err_cnt == 0)
+		cout << "*** TOP TEST PASSED! ***" << endl;
+	else
+		cout << err_cnt << " errors are detected!\n"<< "*** TEST FAILED! ***" << endl;
+	return (err_cnt == 0)? 0 : -1;
+	for(int i=0;i<MAXSIZE;i++){
+		delete[]src_poly[i];
+		delete[]dst_poly[i];
+		delete[]M[i];
+		delete[]flow[i];
+	}
+
+	delete[] hls_in;
+	delete[] in;
+	delete[] hls_out;
+	delete[] src_poly;
+	delete[] dst_poly;
+	delete[] M;
+	delete[] flow;
+}
+
 int test_poly(){
 	pix_t *in;
 	data_t **out;
@@ -173,5 +238,5 @@ int test_poly(){
 }
 
 int main(){
-	return test_poly();
+	return test_top();
 }
