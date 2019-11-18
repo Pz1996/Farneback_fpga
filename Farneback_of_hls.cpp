@@ -287,22 +287,16 @@ void Farneback_top(volatile pix_t* mig_in, volatile data_t* mig_out){
 #pragma HLS INTERFACE m_axi depth=3200000 port=mig_out
 #pragma HLS DATAFLOW
 	hls::stream<pix_t> src_img_strm("src_img_strm");
-#pragma HLS STREAM variable=src_img_strm depth=1440 dim=1
 #pragma HLS DATA_PACK variable=src_img_strm
 	hls::stream<pix_t> dst_img_strm("dst_img_strm");
-#pragma HLS STREAM variable=dst_img_strm depth=1440 dim=1
 #pragma HLS DATA_PACK variable=dst_img_strm
 	hls::stream<Data_5> src_poly("src_poly");
-#pragma HLS STREAM variable=src_poly depth=1440 dim=1
 #pragma HLS DATA_PACK variable=src_poly
 	hls::stream<Data_5> dst_poly("dst_poly");
-#pragma HLS STREAM variable=dst_poly depth=1440 dim=1
 #pragma HLS DATA_PACK variable=dst_poly
 	hls::stream<Data_5> M("M");
-#pragma HLS STREAM variable=M depth=1440 dim=1
 #pragma HLS DATA_PACK variable=M
 	hls::stream<Data_2> flow("flow");
-#pragma HLS STREAM variable=flow depth=1440 dim=1
 #pragma HLS DATA_PACK variable=flow
 
 	for(int i=0;i<MAXSIZE;i++){
@@ -325,3 +319,5 @@ void Farneback_top(volatile pix_t* mig_in, volatile data_t* mig_out){
 		mig_out[i*2+1] = tmp.r1;
 	}
 }
+
+
