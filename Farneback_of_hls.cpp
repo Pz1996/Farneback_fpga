@@ -289,6 +289,44 @@ void UpdateMat_0_hls(hls::stream<Data_5> &src_poly, hls::stream<Data_5> &dst_pol
 	}
 }
 
+void UpdateMat_hls(hls::stream<Data_5> &src_poly, hls::stream<Data_5> &dst_poly,hls::stream<Data_2> &flow,
+		hls::stream<Data_5>& M, short width, short height){
+	UpdataMat_H:for(int i=0;i<height;i++){
+#pragma HLS LOOP_TRIPCOUNT min=240 max=480
+		UpdataMat_W:for(int j=0;j<width;j++){
+#pragma HLS LOOP_TRIPCOUNT min=320 max=640
+#pragma HLS PIPELINE II=2
+			Data_5 src, dst, m;
+			data_t a00, a01, a11, b0, b1;
+			data_t dx_f, dy_f;
+			Data_2 flow_val;
+			flow_val = flow.read();
+			int dx, dy;
+			dx_f = flow_val.r0;
+			dy_f = flow_val.r1;
+			dx = (dx_f >= 0) ? (int)(dx_f + 0.5) : (int)(dx_f - 0.5);
+			dy = (dy_f >= 0) ? (int)(dy_f + 0.5) : (int)(dy_f - 0.5);
+			src = src_poly.read();
+			dst = dst_poly.read();
+			a00 = (src.r2 + dst.r2) / 2; //r4
+			a01 = (src.r4 + dst.r4) / 4; //r6
+			a11 = (src.r3 + dst.r3) / 2; //r5
+			b0 = (src.r0 - dst.r0) / 2; //r2
+			b1 = (src.r1 - dst.r1) / 2; //r3
+
+			b0 += a00 * dx + a01 * dy;
+			b1 += a01 * dx + a11 * dy;
+
+			m.r0 = a00*a00 + a01*a01; // G(0, 0)
+			m.r1 = a01*(a00 + a11); // G(0, 1)
+			m.r2 = a11*a11 + a01*a01; // G(1, 1)
+			m.r3 = a00*b0 + a01*b1; // H(0)
+			m.r4 = a01*b0 + a11*b1; // H(1)
+			M.write(m);
+		}
+	}
+}
+
 void UpdateFlow_hls(hls::stream<Data_5>&M, hls::stream<Data_2>&flow_out, int width, int height){
 #pragma HLS DATAFLOW
 	const int K = DE_SAMPLE_SIZE;
@@ -371,7 +409,6 @@ void Farneback_core(hls::stream<pix_t>& img_in, hls::stream<Data_5>& d5_in, hls:
 	UpdateMat_0_hls(poly, d5_in, M, width, height);
 	UpdateFlow_hls(M, d2_out, width, height);
 }
-
 
 void Farneback_top(volatile pix_t* mig_in, volatile data_t* mig_out){
 #pragma HLS INTERFACE s_axilite port=return

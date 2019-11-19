@@ -102,7 +102,95 @@ int test_mat_2_1(){
 	}
 
 	if(err_cnt == 0)
-		cout << "*** TEST PASSED ***" << endl;
+		cout << "*** MAT 2 1 TEST PASSED ***" << endl;
+	else
+		cout << err_cnt << " errors are detected!\n"<< "*** TEST FAILED ***" << endl;
+	return (err_cnt == 0)? 0 : -1;
+}
+
+int test_mat(){
+	data_t **src_poly;//[MAXSIZE][5];
+	data_t **dst_poly;//[MAXSIZE][5];
+	data_t **flow_in;//[MAXSIZE][2];
+	data_t **M;//[MAXSIZE][5];
+
+	int scale = 2;
+	hls::stream<Data_5> hls_src_poly("hls_src_poly");
+	hls::stream<Data_5> hls_dst_poly("hls_dst_poly");//[MAXSIZE];
+	hls::stream<Data_2> hls_flow_in("hls_flow_in");
+	hls::stream<Data_5>hls_M("hls_M");
+
+	src_poly = new data_t*[MAXSIZE];
+	dst_poly = new data_t*[MAXSIZE];
+	flow_in = new data_t*[MAXSIZE];
+	M = new data_t*[MAXSIZE];
+
+	for(int i=0;i<MAXSIZE;i++){
+		src_poly[i] = new data_t[5];
+		dst_poly[i] = new data_t[5];
+		flow_in[i] = new data_t[2];
+		M[i] = new data_t[5];
+	}
+
+	//Generate input data
+	for(int i=0;i<WIDTH*HEIGHT;i++){
+		Data_5 d5;
+		src_poly[i][0] = d5.r0 = i%255;
+		src_poly[i][1] = d5.r1 = i%233;
+		src_poly[i][2] = d5.r2 = i%244;
+		src_poly[i][3] = d5.r3 = i%222;
+		src_poly[i][4] = d5.r4 = i%211;
+		hls_src_poly.write(d5);
+		dst_poly[i][0] = i%155;
+		dst_poly[i][1] = i%133;
+		dst_poly[i][2] = i%144;
+		dst_poly[i][3] = i%122;
+		dst_poly[i][4] = i%111;
+	}
+	for(int i=0;i<WIDTH*HEIGHT; i++){
+		Data_2 d2;
+		data_t dx_f, dy_f;
+		dx_f = flow_in[i][0] = d2.r0 = (i%4)/1.6-2;
+		dy_f = flow_in[i][1] = d2.r1 = (i%3)/0.8-1;
+		hls_flow_in.write(d2);
+		int fx, fy, dx, dy;
+		dx = (dx_f >= 0) ? (int)(dx_f + 0.5) : (int)(dx_f - 0.5);
+		dy = (dy_f >= 0) ? (int)(dy_f + 0.5) : (int)(dy_f - 0.5);
+		fx = i/WIDTH + dx;
+		fy = i%WIDTH + dy;
+		fx = (fx < 0) ? 0 : (fx >= HEIGHT) ? HEIGHT - 1 : fx;
+		fy = (fy < 0) ? 0 : (fy >= WIDTH) ? WIDTH - 1 : fy;
+		Data_5 d5;
+		d5.r0 = dst_poly[fx*WIDTH+fy][0];
+		d5.r1 = dst_poly[fx*WIDTH+fy][1];
+		d5.r2 = dst_poly[fx*WIDTH+fy][2];
+		d5.r3 = dst_poly[fx*WIDTH+fy][3];
+		d5.r4 = dst_poly[fx*WIDTH+fy][4];
+		hls_dst_poly.write(d5);
+	}
+
+	//ref model
+	UpdateMat(src_poly, dst_poly, flow_in, M, WIDTH, HEIGHT, 1);
+	//DUT
+	UpdateMat_hls(hls_src_poly, hls_dst_poly, hls_flow_in, hls_M, WIDTH, HEIGHT);
+
+	//check
+	int err_cnt = 0;
+	for(int i=0;i<WIDTH*HEIGHT;i++){
+		Data_5 d5;
+		d5 = hls_M.read();
+		if(d5.r0 - M[i][0] > 0.1 ||d5.r0 - M[i][0] < -0.1 || d5.r1 - M[i][1] > 0.1 ||d5.r1 - M[i][1] < -0.1 ||
+				d5.r2 - M[i][2] > 0.1 ||d5.r2 - M[i][2] < -0.1 ||d5.r3 - M[i][3] > 0.1 ||d5.r3 - M[i][3] < -0.1 ||
+				d5.r4 - M[i][4] > 0.1 ||d5.r4 - M[i][4] < -0.1)
+		{
+			err_cnt++;
+			printf("[%d:%d] REF(%f,%f,%f,%f,%f)DUT(%f,%f,%f,%f,%f)\n", i/WIDTH, i%WIDTH, M[i][0], M[i][1], M[i][2], M[i][3], M[i][4], d5.r0, d5.r1, d5.r2, d5.r3, d5.r4);
+		}
+
+	}
+
+	if(err_cnt == 0)
+		cout << "*** MAT TEST PASSED ***" << endl;
 	else
 		cout << err_cnt << " errors are detected!\n"<< "*** TEST FAILED ***" << endl;
 	return (err_cnt == 0)? 0 : -1;
@@ -259,7 +347,7 @@ int test_poly(){
 		}
 	}
 	if(err_cnt == 0)
-		cout << "*** TEST PASSED! ***" << endl;
+		cout << "*** UPDATE MAT TEST PASSED! ***" << endl;
 	else
 		cout << err_cnt << " errors are detected!\n"<< "*** TEST FAILED! ***" << endl;
 	return (err_cnt == 0)? 0 : -1;
@@ -272,5 +360,5 @@ int test_poly(){
 }
 
 int main(){
-	return test_smooth();
+	return test_mat();
 }
