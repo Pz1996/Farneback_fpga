@@ -28,24 +28,31 @@ void Smooth(pix_t in[MAXSIZE], pix_t out[MAXSIZE], int width, int height)
 		4,	16,	24,	16,	4,
 		1,	4,	6,	4,	1
 	};
+	int n = (5 - 1) / 2;
+
 	// use a kernel to converlute the image
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
 			int cnt = 0;
 			int sum = 0;
-			for (int m = -2; m < 3; m++) {
-				for (int n = -2; n < 3; n++) {
+
+			int this_i = i, this_j = j;
+
+			i = (i < n) ? n : (i >= height - n) ? height - n - 1 : i;
+			j = (j < n) ? n : (j >= width - n) ? width - n - 1 : j;
+
+			for (int ii = -n; ii <= n; ii++) {
+				for (int jj = -n; jj <= n; jj++) {
 					// get the valid point position
 					int px, py;
-					px = i + m;
-					py = j + n;
-					if (px < 0) px = 0;
-					if (px >= height) px = height - 1;
-					if (py < 0) py = 0;
-					if (py >= width) py = width - 1;
-					sum += in[px * width + py] * coeff[cnt++];
+					px = i + ii;
+					py = j + jj;
+					sum += in[px * width + py] * coeff[(ii+n)*5 + jj + n];
 				}
 			}
+			i = this_i;
+			j = this_j;
+
 			out[i*width + j] = (pix_t)(sum / 256);
 		}
 	}

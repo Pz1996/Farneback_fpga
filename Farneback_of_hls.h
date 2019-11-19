@@ -47,7 +47,9 @@ struct Data_2{
 	}
 };
 
-void Poly_Exp_hls_strm(hls::stream<pix_t>& in, hls::stream<Data_5> &out, int width, int height);
+void Smooth_hls(hls::stream<pix_t>& in, hls::stream<pix_t>&out, int width, int height);
+
+void Poly_Exp_hls_strm(hls::stream<pix_t>& in, hls::stream<Data_5> &out1, hls::stream<Data_5> &out2, int width, int height);
 
 void UpdataMat_2_1_hls(hls::stream<Data_5> &src_poly, Data_5 dst_poly[MAXSIZE], hls::stream<Data_2>& flow_in,
 		hls::stream<Data_5>& M, short width, short height);

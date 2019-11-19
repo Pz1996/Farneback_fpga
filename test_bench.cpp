@@ -4,6 +4,38 @@
 #include <iostream>
 using namespace std;
 
+int test_smooth(){
+	int height=48, width = 64;
+	pix_t *in, *out;
+	hls::stream<pix_t> in_hls("in_hls");
+	hls::stream<pix_t> out_hls("out_hls");
+	in = new pix_t[height * width];
+	out = new pix_t[height * width];
+
+	//Generate input data
+	for(int i=0;i<height*width;i++){
+		in[i] = i%123 + i%23;
+		in_hls.write(i%123 + i%23);
+	}
+
+	Smooth_hls(in_hls, out_hls, width, height);
+	Smooth(in, out, width, height);
+
+	//check
+	int err_cnt = 0;
+	for(int i=0;i<width*height;i++){
+		pix_t in_val = out_hls.read();
+		if(in_val != out[i]) err_cnt++;
+
+	}
+
+	if(err_cnt == 0)
+		cout << "*** SMOOTH TEST PASSED ***" << endl;
+	else
+		cout << err_cnt << " errors are detected!\n"<< "*** TEST FAILED ***" << endl;
+	return (err_cnt == 0)? 0 : -1;
+}
+
 int test_mat_2_1(){
 	data_t **src_poly;//[MAXSIZE][5];
 	data_t **dst_poly;//[MAXSIZE][5];
@@ -197,6 +229,7 @@ int test_poly(){
 		out[i] = new data_t[5];
 	hls::stream<pix_t> in_hls("in_hls");
 	hls::stream<Data_5> out_hls("out_hls");
+	hls::stream<Data_5> out_hls2("out_hls2");
 
 	for(int i=0;i<MAXSIZE;i++){
 		in[i] = i % 234;
@@ -204,13 +237,14 @@ int test_poly(){
 	}
 
 	Poly_Exp(in, out, WIDTH, HEIGHT);
-	Poly_Exp_hls_strm(in_hls, out_hls, WIDTH, HEIGHT);
+	Poly_Exp_hls_strm(in_hls, out_hls, out_hls2, WIDTH, HEIGHT);
 
 	//check
 	int err_cnt = 0;
 	for(int i=0;i<MAXSIZE;i++){
 		Data_5 d5;
 		d5 = out_hls.read();
+		out_hls2.read();
 		data_t sq_sum = 0;
 		sq_sum += (out[i][0] - d5.r0)*(out[i][0] - d5.r0);
 		sq_sum += (out[i][1] - d5.r1)*(out[i][1] - d5.r1);
@@ -238,5 +272,5 @@ int test_poly(){
 }
 
 int main(){
-	return test_top();
+	return test_smooth();
 }
