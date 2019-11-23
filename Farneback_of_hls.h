@@ -28,6 +28,14 @@ struct Data_5{
 		out.r4 = r4 / coeff;
 		return out;
 	}
+
+	void operator=(const Data_5 &in){
+		r0 = in.r0;
+		r1 = in.r1;
+		r2 = in.r2;
+		r3 = in.r3;
+		r4 = in.r4;
+	}
 };
 
 struct Data_2{
@@ -45,11 +53,16 @@ struct Data_2{
 		out.r1 = r1 / coeff;
 		return out;
 	}
+
+	void operator=(const Data_2 &in){
+		r0 = in.r0;
+		r1 = in.r1;
+	}
 };
 
 void Smooth_hls(hls::stream<pix_t>& in, hls::stream<pix_t>&out, int width, int height);
 
-void Poly_Exp_hls_strm(hls::stream<pix_t>& in, hls::stream<Data_5> &out1, hls::stream<Data_5> &out2, int width, int height);
+void Poly_Exp_hls_strm(hls::stream<pix_t>& in, hls::stream<Data_5> &out, int width, int height);
 
 void UpdataMat_2_1_hls(hls::stream<Data_5> &src_poly, Data_5 dst_poly[MAXSIZE], hls::stream<Data_2>& flow_in,
 		hls::stream<Data_5>& M, short width, short height);
@@ -61,5 +74,8 @@ void UpdateMat_hls(hls::stream<Data_5> &src_poly, hls::stream<Data_5> &dst_poly,
 		hls::stream<Data_5>& M, short width, short height);
 
 void UpdateFlow_hls(hls::stream<Data_5>&M, hls::stream<Data_2>&flow_out, int width, int height);
+
+void Farneback_core(hls::stream<pix_t>& img_in, hls::stream<Data_5>& d5_in, hls::stream<Data_2>& d2_in,
+		hls::stream<Data_5>& d5_out, hls::stream<Data_2>& d2_out, short width, short height);
 
 void Farneback_top(volatile pix_t* mig_in, volatile data_t* mig_out);
