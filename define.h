@@ -2,7 +2,7 @@
 #define WIDTH 640
 #define HEIGHT 480
 
-#define POLY_EXP_SAMPLE_SIZE 15
+#define POLY_EXP_SAMPLE_SIZE 7
 #define DE_SAMPLE_SIZE 11
 #define MAXSIZE (WIDTH)*(HEIGHT)
 
