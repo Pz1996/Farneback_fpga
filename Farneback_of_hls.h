@@ -60,22 +60,40 @@ struct Data_2{
 	}
 };
 
+struct Data_2u{
+	char r0, r1;
+};
+
+
 void Smooth_hls(hls::stream<pix_t>& in, hls::stream<pix_t>&out, int width, int height);
 
 void Poly_Exp_hls_strm(hls::stream<pix_t>& in, hls::stream<Data_5> &out, int width, int height);
 
+void Poly_Exp_hls_bram(pix_t img_in[POLY_EXP_SAMPLE_SIZE*POLY_EXP_SAMPLE_SIZE][RAM_LENGTH],
+		hls::stream<Data_2u>& flow_in, hls::stream<Data_5> &out, int width, int height);
+
 void UpdataMat_2_1_hls(hls::stream<Data_5> &src_poly, Data_5 dst_poly[MAXSIZE], hls::stream<Data_2>& flow_in,
-		hls::stream<Data_5>& M, short width, short height);
+		hls::stream<Data_5>& M, int width, int height);
 
 void UpdateMat_0_hls(hls::stream<Data_5> &src_poly, hls::stream<Data_5> &dst_poly, hls::stream<Data_5>& M,
-		short width, short height);
+		int width, int height);
 
-void UpdateMat_hls(hls::stream<Data_5> &src_poly, hls::stream<Data_5> &dst_poly,hls::stream<Data_2> &flow,
-		hls::stream<Data_5>& M, short width, short height);
+void UpdateMat_hls(hls::stream<Data_5> &src_poly, hls::stream<Data_5> &dst_poly,hls::stream<Data_2u> &flow,
+		hls::stream<Data_5>& M, int width, int height);
 
 void UpdateFlow_hls(hls::stream<Data_5>&M, hls::stream<Data_2>&flow_out, int width, int height);
 
-void Farneback_core(hls::stream<pix_t>& img_in, hls::stream<Data_5>& d5_in, hls::stream<Data_2>& d2_in,
-		hls::stream<Data_5>& d5_out, hls::stream<Data_2>& d2_out, short width, short height);
+//void Farneback_core(hls::stream<pix_t>& img_in, hls::stream<Data_5>& d5_in, hls::stream<Data_2>& d2_in,
+//		hls::stream<Data_5>& d5_out, hls::stream<Data_2>& d2_out, short width, short height);
 
 void Farneback_top(volatile pix_t* mig_in, volatile data_t* mig_out);
+
+void Farneback_core(hls::stream<pix_t> &src_img, pix_t dst_img[POLY_EXP_SAMPLE_SIZE*POLY_EXP_SAMPLE_SIZE][RAM_LENGTH],
+		hls::stream<Data_2u>& flow_in, hls::stream<Data_2>& flow_out, const pix_t con);
+
+void Farneback_core_wrapper(pix_t *src_in, pix_t dst_in[POLY_EXP_SAMPLE_SIZE*POLY_EXP_SAMPLE_SIZE][RAM_LENGTH],
+		Data_2u flow_in[MAXSIZE], Data_2u* flow_out, const pix_t con);
+
+void Farneback_top_v2_1(pix_t* mig_in, Data_2u* mig_out, const pix_t con);
+
+
